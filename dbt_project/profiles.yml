@@ -1,0 +1,10 @@
+# Run dbt from the data_eng folder with:
+#   dbt <command> --project-dir dbt_project --profiles-dir dbt_project
+# The DuckDB path is relative to the folder you run dbt from (data_eng).
+data_eng:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/warehouse.duckdb') }}"
+      threads: 1

@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# dbt
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+logs/
+
+# Data and databases (downloaded or generated, not committed)
+data/raw/*
+!data/raw/.gitkeep
+*.duckdb
+*.duckdb.wal
+
+# LLM response cache
+.llm_cache/
+
+# Generated reports
+reports/*
+!reports/.gitkeep
+`ndbt_project/.user.yml
+*.pdf
+Data engineering LLM-generated data.txt

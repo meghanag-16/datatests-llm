@@ -1,0 +1,19 @@
+# NOTE: pyproject.toml is now the source of truth (managed with uv).
+# This file is kept only as a fallback for plain pip: pip install -r requirements.txt
+
+# Core data stack
+duckdb>=1.0
+dbt-core>=1.8,<2
+dbt-duckdb>=1.8,<2
+pandas>=2.0
+pyyaml>=6.0
+
+# LLM providers
+google-genai>=1.0      # Gemini (official Google Gen AI SDK)
+openai>=1.0            # used only as a client for OpenAI-compatible endpoints (Groq, NVIDIA NIM, Ollama)
+
+# Config
+python-dotenv>=1.0
+
+# Tests
+pytest>=8.0

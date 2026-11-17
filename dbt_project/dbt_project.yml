@@ -1,0 +1,14 @@
+name: data_eng
+version: "0.1.0"
+config-version: 2
+profile: data_eng
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  data_eng:
+    +materialized: table
