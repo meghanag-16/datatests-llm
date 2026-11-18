@@ -57,7 +57,7 @@ def test_validate_reply_keeps_and_rejects(con):
     assert "does not run" in reasons
     assert "exact duplicate" in reasons
     assert "not a known model" in reasons
-    assert "non-numeric" in reasons
+    assert "neither numeric nor a date" in reasons
     assert "unknown column" in reasons
     assert "not allowed" in reasons
 
@@ -81,3 +81,24 @@ def test_yaml_round_trip(con):
 def test_bad_yaml_raises():
     with pytest.raises(ValueError):
         parse_yaml("```yaml\nmodels: [\n```")
+
+
+def test_in_range_accepts_date_bounds(con):
+    contexts = {"games": TableContext("games", 1, [Column("day", "DATE"), Column("label", "VARCHAR")])}
+    con.execute("create table games as select date '2024-01-05' as day, 'x' as label")
+    reply = """```yaml
+models:
+  - name: games
+    columns:
+      - name: day
+        data_tests:
+          - in_range: {min_value: 2023-08-01, max_value: '2024-06-30'}
+          - in_range: {min_value: not-a-date}
+      - name: label
+        data_tests:
+          - in_range: {min_value: 0}
+```"""
+    kept, rejected = validate_reply(reply, "games", contexts, con)
+    assert [s.args for s in kept] == [{"min_value": "2023-08-01", "max_value": "2024-06-30"}]
+    reasons = " | ".join(r.reason for r in rejected)
+    assert "not a date" in reasons and "neither numeric nor a date" in reasons

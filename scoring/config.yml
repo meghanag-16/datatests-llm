@@ -1,0 +1,12 @@
+# Fixed operator split for the held-out evaluation.
+# Tests are chosen using mutants from "selection" and measured on mutants from "heldout".
+# The leave-one-operator-out rotation is always reported as well.
+selection:
+  - null_injection
+  - duplicate_key
+  - invalid_category
+  - double_count
+heldout:
+  - out_of_range
+  - orphaned_child
+  - date_shift

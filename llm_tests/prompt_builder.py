@@ -14,7 +14,8 @@ Column-level tests (put them under the column's data_tests):
   - unique
   - accepted_values:   arguments: {values: [list of allowed values]}
   - relationships:     arguments: {to: "ref('<other_model>')", field: <column in that model>}
-  - in_range:          arguments: {min_value: <number or omit>, max_value: <number or omit>}
+  - in_range:          arguments: {min_value: <bound or omit>, max_value: <bound or omit>}
+                       (numeric columns: numbers; date columns: 'YYYY-MM-DD')
 Model-level tests (put them under the model's data_tests):
   - expression_is_true: arguments: {expression: "<SQL boolean expression over this model's columns>"}"""
 

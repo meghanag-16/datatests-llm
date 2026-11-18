@@ -27,6 +27,42 @@ models:
             test_id: dim_teams.team_id.in_range.93936a1f
             source: llm
             generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: home_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.cce03189
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: away_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.6fad3167
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: home_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.eb4e31b8
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: away_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.fb5e4aa9
+            source: llm
+            generator: llm_groq
   - name: team_name
     data_tests:
     - not_null:
@@ -45,26 +81,10 @@ models:
   data_tests:
   - expression_is_true:
       arguments:
-        expression: match_date <= CURRENT_DATE
-      config:
-        meta:
-          test_id: fct_matches._model.expression_is_true.9990f51d
-          source: llm
-          generator: llm_groq
-  - expression_is_true:
-      arguments:
         expression: home_team_id <> away_team_id
       config:
         meta:
           test_id: fct_matches._model.expression_is_true.41e06d57
-          source: llm
-          generator: llm_groq
-  - expression_is_true:
-      arguments:
-        expression: (match_status <> 'Match Finished') OR (home_team_score IS NOT NULL AND away_team_score IS NOT NULL)
-      config:
-        meta:
-          test_id: fct_matches._model.expression_is_true.7a8abc20
           source: llm
           generator: llm_groq
   columns:
@@ -171,13 +191,18 @@ models:
             generator: llm_groq
   - name: home_team_score
     data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_score.not_null.9395da08
+            source: llm
+            generator: llm_groq
     - in_range:
         arguments:
           min_value: 0
-          max_value: 20
         config:
           meta:
-            test_id: fct_matches.home_team_score.in_range.a157fb00
+            test_id: fct_matches.home_team_score.in_range.d30f5b9e
             source: llm
             generator: llm_groq
   - name: away_team_id
@@ -216,25 +241,22 @@ models:
             generator: llm_groq
   - name: away_team_score
     data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_score.not_null.37a4d1d6
+            source: llm
+            generator: llm_groq
     - in_range:
         arguments:
           min_value: 0
-          max_value: 20
         config:
           meta:
-            test_id: fct_matches.away_team_score.in_range.39a3d2d9
+            test_id: fct_matches.away_team_score.in_range.e10eab13
             source: llm
             generator: llm_groq
 - name: fct_training_dataset
   data_tests:
-  - expression_is_true:
-      arguments:
-        expression: match_date <= current_date
-      config:
-        meta:
-          test_id: fct_training_dataset._model.expression_is_true.1ae3c6a8
-          source: llm
-          generator: llm_groq
   - expression_is_true:
       arguments:
         expression: home_team_id != away_team_id
@@ -273,6 +295,15 @@ models:
         config:
           meta:
             test_id: fct_training_dataset.match_date.not_null.6b54d26d
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+          max_value: '2024-12-31'
+        config:
+          meta:
+            test_id: fct_training_dataset.match_date.in_range.52eb16ad
             source: llm
             generator: llm_groq
   - name: match_result

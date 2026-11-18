@@ -1,0 +1,148 @@
+# Minimal test set chosen by scoring/run.py from: manual_baseline.yml, llm_gemini.yml.
+# Do not edit by hand.
+
+version: 2
+models:
+- name: dim_teams
+  columns:
+  - name: team_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: dim_teams.team_id.unique.5c9404f0
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: dim_teams.team_id.not_null.1af3dabe
+            source: manual_baseline
+- name: fct_matches
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: CAST(SUBSTRING(season, 1, 4) AS INTEGER) <= EXTRACT(YEAR FROM match_date) AND EXTRACT(YEAR FROM match_date)
+          <= CAST(SUBSTRING(season, 6, 4) AS INTEGER)
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.c6af78c0
+          source: llm_gemini
+  - expression_is_true:
+      arguments:
+        expression: NOT (match_status = 'Match Finished' AND (home_team_score IS NULL OR away_team_score IS NULL))
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.f6f13494
+          source: llm_gemini
+  columns:
+  - name: match_status
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Match Finished
+          - Scheduled
+          - Postponed
+          - Cancelled
+          - Live
+        config:
+          meta:
+            test_id: fct_matches.match_status.accepted_values.447f360f
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_status.not_null.12116396
+            source: llm_gemini
+  - name: match_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: fct_matches.match_id.unique.7f8e2dc4
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_id.not_null.0b1efeed
+            source: manual_baseline
+  - name: away_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_id.not_null.be97e493
+            source: llm_gemini
+  - name: away_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_name.not_null.5148c9d8
+            source: llm_gemini
+  - name: home_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_id.not_null.6d2ca6bb
+            source: llm_gemini
+  - name: home_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_name.not_null.d527f2eb
+            source: llm_gemini
+  - name: league_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.league_id.not_null.a851ce1c
+            source: llm_gemini
+  - name: match_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_date.not_null.b6a39e2e
+            source: llm_gemini
+  - name: season
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.season.not_null.5a9cc818
+            source: llm_gemini
+- name: fct_training_dataset
+  columns:
+  - name: away_team_name
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_name
+        config:
+          meta:
+            test_id: fct_training_dataset.away_team_name.relationships.dbc9cc78
+            source: llm_gemini
+  - name: home_avg_goals_conceded_last_5
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0.0
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_conceded_last_5.in_range.f96625ed
+            source: llm_gemini
+  - name: home_team_name
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_name
+        config:
+          meta:
+            test_id: fct_training_dataset.home_team_name.relationships.e2d2ac82
+            source: llm_gemini

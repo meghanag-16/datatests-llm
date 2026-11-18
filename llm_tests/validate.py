@@ -6,6 +6,7 @@ arguments, SQL that does not compile) are dropped with a reason instead of silen
 """
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import re
@@ -21,6 +22,7 @@ COLUMN_TESTS = {"not_null", "unique", "accepted_values", "relationships", "in_ra
 MODEL_TESTS = {"expression_is_true"}
 NUMERIC_TYPES = ("TINYINT", "SMALLINT", "INTEGER", "BIGINT", "HUGEINT", "UTINYINT", "USMALLINT",
                  "UINTEGER", "UBIGINT", "FLOAT", "REAL", "DOUBLE", "DECIMAL", "NUMERIC")
+DATE_TYPES = ("DATE", "TIMESTAMP")
 REF_PATTERN = re.compile(r"""^\s*ref\(\s*['"]([A-Za-z0-9_]+)['"]\s*\)\s*$""")
 
 
@@ -110,6 +112,24 @@ def raw_tests(models: list[dict]) -> list[tuple[str, str | None, object]]:
 
 # ------------------------------------------------------------------ checking
 
+def _as_iso_date(value) -> str | None:
+    """A date bound as 'YYYY-MM-DD' (or a full ISO timestamp), else None.
+
+    YAML turns an unquoted 2024-05-19 into a date object, so both forms are accepted.
+    """
+    if isinstance(value, (dt.date, dt.datetime)):
+        return value.isoformat()
+    if isinstance(value, str):
+        text = value.strip()
+        for parse in (dt.date.fromisoformat, dt.datetime.fromisoformat):
+            try:
+                parse(text)
+                return text
+            except ValueError:
+                pass
+    return None
+
+
 def check_test(model: str, column: str | None, entry, contexts: dict[str, TableContext],
                con: duckdb.DuckDBPyConnection | None, source: str = "llm") -> TestSpec | Rejected:
     raw = json.dumps(entry, default=str)
@@ -151,13 +171,22 @@ def check_test(model: str, column: str | None, entry, contexts: dict[str, TableC
         clean = {"to": f"ref('{parent}')", "field": fld}
     elif ttype == "in_range":
         col_type = next(c.type for c in ctx.columns if c.name == column).upper()
-        if not col_type.startswith(NUMERIC_TYPES):
-            return reject(f"in_range on non-numeric column ({col_type})")
+        is_date = col_type.startswith(DATE_TYPES)
+        if not (col_type.startswith(NUMERIC_TYPES) or is_date):
+            return reject(f"in_range on a column that is neither numeric nor a date ({col_type})")
         for bound in ("min_value", "max_value"):
-            if args.get(bound) is not None:
-                if isinstance(args[bound], bool) or not isinstance(args[bound], (int, float)):
+            value = args.get(bound)
+            if value is None:
+                continue
+            if is_date:
+                iso = _as_iso_date(value)
+                if iso is None:
+                    return reject(f"in_range {bound} is not a date (use 'YYYY-MM-DD')")
+                clean[bound] = iso
+            else:
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
                     return reject(f"in_range {bound} is not a number")
-                clean[bound] = args[bound]
+                clean[bound] = value
         if not clean:
             return reject("in_range needs min_value or max_value")
     elif ttype == "expression_is_true":

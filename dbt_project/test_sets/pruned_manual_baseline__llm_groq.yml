@@ -1,0 +1,151 @@
+# Minimal test set chosen by scoring/run.py from: manual_baseline.yml, llm_groq.yml.
+# Do not edit by hand.
+
+version: 2
+models:
+- name: dim_teams
+  columns:
+  - name: team_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: dim_teams.team_id.unique.5c9404f0
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: dim_teams.team_id.not_null.1af3dabe
+            source: manual_baseline
+- name: fct_matches
+  columns:
+  - name: away_team_name
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_name
+        config:
+          meta:
+            test_id: fct_matches.away_team_name.relationships.cf1d1335
+            source: llm_groq
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_name.not_null.5148c9d8
+            source: llm_groq
+  - name: home_team_name
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_name
+        config:
+          meta:
+            test_id: fct_matches.home_team_name.relationships.8e9a7d5c
+            source: llm_groq
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_name.not_null.d527f2eb
+            source: llm_groq
+  - name: match_status
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Match Finished
+          - Scheduled
+          - Postponed
+          - Cancelled
+        config:
+          meta:
+            test_id: fct_matches.match_status.accepted_values.caadcf2f
+            source: llm_groq
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_status.not_null.12116396
+            source: llm_groq
+  - name: match_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: fct_matches.match_id.unique.7f8e2dc4
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_id.not_null.0b1efeed
+            source: manual_baseline
+  - name: away_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_id.not_null.be97e493
+            source: llm_groq
+  - name: away_team_score
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_score.not_null.37a4d1d6
+            source: llm_groq
+  - name: home_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_id.not_null.6d2ca6bb
+            source: llm_groq
+  - name: home_team_score
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_score.not_null.9395da08
+            source: llm_groq
+  - name: league_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.league_id.not_null.a851ce1c
+            source: llm_groq
+  - name: match_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_date.not_null.b6a39e2e
+            source: llm_groq
+  - name: season
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.season.not_null.5a9cc818
+            source: llm_groq
+- name: fct_training_dataset
+  columns:
+  - name: home_avg_goals_conceded_last_5
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_conceded_last_5.in_range.b8b6b019
+            source: llm_groq
+  - name: match_date
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+          max_value: '2024-12-31'
+        config:
+          meta:
+            test_id: fct_training_dataset.match_date.in_range.52eb16ad
+            source: llm_groq
