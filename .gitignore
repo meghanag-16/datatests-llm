@@ -24,6 +24,7 @@ data/raw/*
 # Generated reports
 reports/*
 !reports/.gitkeep
-`ndbt_project/.user.yml
+
+dbt_project/.user.yml
 *.pdf
 Data engineering LLM-generated data.txt

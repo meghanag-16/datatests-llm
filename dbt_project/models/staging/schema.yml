@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: stg_matches
+    description: One row per TheSportsDB event, kept as a single struct column (match_data) like the paper's model.
+    columns:
+      - name: match_data

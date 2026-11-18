@@ -1,0 +1,39 @@
+Third-party code notice
+
+Parts of this project are adapted from football-analytics-platform by Ismail Gargouri
+(https://github.com/igargouri10/football-analytics-platform), used under the MIT licence below.
+
+Files that contain code or test definitions adapted from that repository:
+- dbt_project/models/staging/stg_matches.sql
+- dbt_project/models/marts/dim_teams.sql
+- dbt_project/models/marts/fct_matches.sql
+- dbt_project/models/marts/fct_training_dataset.sql
+- dbt_project/test_sets/manual_baseline.yml
+- dbt_project/test_sets/manual_expanded.yml
+- dbt_project/test_sets/authors_llm.yml
+- experiments/run_anomaly_experiment.py
+- scripts/download_epl.py (data source URL and approach)
+
+----------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2025 Ismail Gargouri
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Raw files loaded as-is by scripts/load_epl.py.
+    tables:
+      - name: epl_season
+        description: TheSportsDB eventsseason JSON for the English Premier League 2023-24 (one row, column 'events').

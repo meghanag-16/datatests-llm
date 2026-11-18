@@ -1,0 +1,24 @@
+# Manual-only baseline: the paper authors' weak baseline (4 tests).
+# Copied from github.com/igargouri10/football-analytics-platform
+# dbt_project/schema_versions/schema.manual_baseline.yml (MIT licence).
+
+version: 2
+
+models:
+  - name: fct_matches
+    description: "Fact table containing all finished football matches."
+    columns:
+      - name: match_id
+        description: "The unique identifier for a match."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_teams
+    description: "Dimension table for football teams."
+    columns:
+      - name: team_id
+        description: "The unique identifier for a team."
+        tests:
+          - unique
+          - not_null

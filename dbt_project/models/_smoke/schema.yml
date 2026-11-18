@@ -1,8 +1,0 @@
-version: 2
-models:
-  - name: smoke_check
-    columns:
-      - name: id
-        tests:
-          - not_null
-          - unique
