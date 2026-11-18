@@ -1,0 +1,27 @@
+# Mutation settings for the football models.
+# Column roles that cannot be inferred from types alone are listed here; everything else
+# (categories, numeric and date columns) is detected from the clean data.
+
+tables:
+  dim_teams:
+    primary_key: team_id
+  fct_matches:
+    primary_key: match_id
+
+foreign_keys:
+  - child: fct_matches.home_team_id
+    parent: dim_teams.team_id
+  - child: fct_matches.away_team_id
+    parent: dim_teams.team_id
+
+# Columns never mutated (none for this dataset).
+exclude_columns: []
+
+# A text column counts as a category when it has at most this many distinct values
+# and the distinct values are at most this share of the rows.
+category_max_distinct: 25
+category_max_ratio: 0.5
+
+# How many rows each row-level mutation changes, and how many seeds per mutation.
+rows_per_mutation: [1, 5]
+seeds: [1, 2, 3]

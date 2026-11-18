@@ -28,3 +28,7 @@ reports/*
 dbt_project/.user.yml
 *.pdf
 Data engineering LLM-generated data.txt
+
+# Mutated and temporary databases, mutation manifest
+data/mutants/
+data/experiment_dbs/

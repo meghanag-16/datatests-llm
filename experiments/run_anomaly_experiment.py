@@ -20,6 +20,7 @@ Conditions (test sets in dbt_project/test_sets/):
 Run from the data_eng folder:
     uv run python experiments/run_anomaly_experiment.py
     uv run python experiments/run_anomaly_experiment.py --conditions manual_only
+    uv run python experiments/run_anomaly_experiment.py --test-set manual_plus_llm_gemini.yml
 Results go to reports/anomaly_results/.
 """
 from __future__ import annotations
@@ -246,13 +247,14 @@ def run_one(batch_id: str, condition: str, schema_source: Path) -> dict:
     n_det = sum(d["detected"] for d in detection)
     result = {"batch_id": batch_id, "condition": condition, "test_set": schema_source.name,
               "detected_count": n_det, "total_anomalies": len(detection),
-              "paper_detected_count": PAPER_RESULTS[condition][batch_id],
+              "paper_detected_count": PAPER_RESULTS[condition].get(batch_id),
               "detection": detection, **run}
     (OUTPUT_DIR / f"{run_name}_summary.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
-    flag = "" if n_det == PAPER_RESULTS[condition][batch_id] else "   <-- differs from paper"
-    print(f"  {batch_id:26s} {condition:16s} detected {n_det}/{len(detection)} "
-          f"(paper {PAPER_RESULTS[condition][batch_id]}/{len(detection)}){flag}")
+    paper_n = PAPER_RESULTS[condition].get(batch_id)
+    paper_txt = f" (paper {paper_n}/{len(detection)})" if paper_n is not None else ""
+    flag = "   <-- differs from paper" if paper_n is not None and n_det != paper_n else ""
+    print(f"  {batch_id:26s} {condition:16s} detected {n_det}/{len(detection)}{paper_txt}{flag}")
     if not all(verified.values()):
         print(f"    WARNING: some anomalies were not injected: {verified}")
     if run["errored_tests"]:
@@ -263,7 +265,15 @@ def run_one(batch_id: str, condition: str, schema_source: Path) -> dict:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--conditions", nargs="+", choices=list(CONDITIONS), default=list(CONDITIONS))
+    p.add_argument("--test-set", nargs="+", default=[], metavar="FILE",
+                   help="extra test set(s) from dbt_project/test_sets to run, e.g. manual_plus_llm_gemini.yml")
     args = p.parse_args()
+    for f in args.test_set:
+        path = Path(f) if Path(f).is_absolute() or Path(f).exists() else TEST_SETS / f
+        name = path.stem
+        CONDITIONS[name] = path
+        PAPER_RESULTS[name] = {}
+        args.conditions.append(name)
 
     if not CLEAN_DB.exists():
         print(f"Missing {CLEAN_DB}. Build the models and run scripts/snapshot_clean.py first.")
@@ -293,19 +303,23 @@ def main() -> int:
         rows = [r for r in results if r["condition"] == condition]
         det = sum(r["detected_count"] for r in rows)
         tot = sum(r["total_anomalies"] for r in rows)
-        paper = sum(PAPER_RESULTS[condition].values())
+        paper = sum(PAPER_RESULTS[condition].values()) if PAPER_RESULTS[condition] else None
         summary[condition] = {"detected": det, "total": tot, "paper_detected": paper,
                               "per_batch": {r["batch_id"]: r["detected_count"] for r in rows}}
-        match = "matches the paper" if det == paper else "DIFFERS from the paper"
-        print(f"  {condition:16s} {det}/{tot}  (paper {paper}/16)  {match}")
+        if paper is None:
+            print(f"  {condition:16s} {det}/{tot}")
+        else:
+            match = "matches the paper" if det == paper else "DIFFERS from the paper"
+            print(f"  {condition:16s} {det}/{tot}  (paper {paper}/16)  {match}")
 
     if "manual_only" in summary:
         base = summary["manual_only"]["detected"]
-        for c in ("manual_expanded", "manual_plus_llm"):
+        for c in [c for c in args.conditions if c != "manual_only"]:
             if c in summary and base:
                 gain = (summary[c]["detected"] - base) / base * 100
                 summary[c]["relative_improvement_pct"] = round(gain, 2)
-                print(f"  {c} vs manual_only: +{gain:.2f}% (paper: +128.57%)")
+                paper_txt = " (paper: +128.57%)" if c in ("manual_expanded", "manual_plus_llm") else ""
+                print(f"  {c} vs manual_only: {gain:+.2f}%{paper_txt}")
 
     (OUTPUT_DIR / "final_summary.json").write_text(
         json.dumps({"batches": BATCHES, "summary": summary, "runs": results}, indent=2), encoding="utf-8")

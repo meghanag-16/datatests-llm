@@ -111,6 +111,8 @@ class GeminiProvider(LLMProvider):
             http_options=types.HttpOptions(
                 timeout=int(timeout_seconds() * 1000),  # milliseconds
                 retry_options=types.HttpRetryOptions(attempts=1),
+                # System instructions are only accepted on v1beta; v1 rejects them with a 400.
+                api_version=os.getenv("GEMINI_API_VERSION", "v1beta"),
             ),
         )
 
@@ -273,7 +275,8 @@ def list_models(name: str | None = None) -> list[str]:
 
         client = genai.Client(
             api_key=_require("GEMINI_API_KEY"),
-            http_options=types.HttpOptions(timeout=int(timeout_seconds() * 1000)),
+            http_options=types.HttpOptions(timeout=int(timeout_seconds() * 1000),
+                                           api_version=os.getenv("GEMINI_API_VERSION", "v1beta")),
         )
         return sorted(m.name.removeprefix("models/") for m in client.models.list())
     from openai import OpenAI
