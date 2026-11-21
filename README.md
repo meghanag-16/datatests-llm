@@ -86,12 +86,9 @@ reports/               experiment outputs (not committed)
 ```
 
 ## How to run
-
-<<<<<<< HEAD
 Requirements: Python 3.12 and uv.
 =======
 Requirements: Python 3.12 and uv ; Docker Desktop only for Airflow.
->>>>>>> 1b766e4a3d1b64c0dc6feb6bdca4ea73b18ea3bf
 
 ```bash
 uv sync
@@ -144,17 +141,13 @@ docker compose -f airflow/docker-compose.yml down
 uv run pytest
 ```
 
-<<<<<<< HEAD
 Experiment results go to `reports/anomaly_results/`, generation reports to `reports/generation/<name>/`, and generated test sets to `dbt_project/test_sets/`. The test set name follows the provider that answered, for example `llm_gemini`. Mutated databases and their manifest go to `data/mutants/`. Scoring results go to `reports/scoring/<name>/` and the minimal test set to `dbt_project/test_sets/pruned_<name>.yml`. For Olist the same files go to an `olist/` subfolder of each of these locations.
 
 Optional LLM provider check: `uv run python scripts/check_llm.py`
 =======
-## Trade-offs
->>>>>>> 1b766e4a3d1b64c0dc6feb6bdca4ea73b18ea3bf
 
 ## Licence
 
-<<<<<<< HEAD
 The code adapted from the authors' repository remains under its MIT licence. See [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) for the licence text and the list of adapted files.
 =======
 ## Limitations
@@ -171,4 +164,3 @@ The code adapted from the authors' repository remains under its MIT licence. See
 Reproduces and builds on Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026 (MIT licence). The football dbt models, the manual and expanded test sets, the authors' LLM test set and the 16 anomaly injections are adapted from that repository; files that reuse their code say so in a header comment, and [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) holds the licence text and the list of adapted files.
 
 Related: T. Rehberger, T. Hütter, L. Ehrlinger and W. Wöß, *Evaluating Data Quality Tools: Measurement Capabilities and LLM Integration*, arXiv:2604.09163, 2026.
->>>>>>> 1b766e4a3d1b64c0dc6feb6bdca4ea73b18ea3bf
