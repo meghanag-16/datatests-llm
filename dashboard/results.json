@@ -1,0 +1,371 @@
+{
+  "exported": "2026-11-21",
+  "reproduction": {
+    "total": 16,
+    "rows": [
+      {
+        "test_set": "Manual only",
+        "detected": 7,
+        "paper": 7
+      },
+      {
+        "test_set": "Manual expanded",
+        "detected": 16,
+        "paper": 16
+      },
+      {
+        "test_set": "Manual + authors' LLM tests",
+        "detected": 16,
+        "paper": 16
+      },
+      {
+        "test_set": "Manual + Gemini 2.5 Flash tests",
+        "detected": 16,
+        "paper": null
+      },
+      {
+        "test_set": "Manual + gpt-oss-120b tests",
+        "detected": 16,
+        "paper": null
+      }
+    ]
+  },
+  "scoring": [
+    {
+      "dataset": "Football",
+      "llm": "Gemini 2.5 Flash",
+      "mutants": 188,
+      "caught": 176,
+      "working_tests": 58,
+      "broken_tests": 0,
+      "minimal_set": 18,
+      "heldout_fixed": {
+        "operators": [
+          "date_shift",
+          "orphaned_child",
+          "out_of_range"
+        ],
+        "mutants": 48,
+        "kept_tests": 17,
+        "caught_by_kept_set": 12,
+        "caught_by_full_set": 36,
+        "kept_pct_of_full": 33.3
+      },
+      "leave_one_out_mean_pct_of_full": 46.0,
+      "leave_one_out": [
+        {
+          "operator": "date_shift",
+          "mutants": 12,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 12
+        },
+        {
+          "operator": "double_count",
+          "mutants": 8,
+          "caught_by_kept_set": 8,
+          "caught_by_full_set": 8
+        },
+        {
+          "operator": "duplicate_key",
+          "mutants": 12,
+          "caught_by_kept_set": 12,
+          "caught_by_full_set": 12
+        },
+        {
+          "operator": "invalid_category",
+          "mutants": 42,
+          "caught_by_kept_set": 6,
+          "caught_by_full_set": 42
+        },
+        {
+          "operator": "null_injection",
+          "mutants": 78,
+          "caught_by_kept_set": 6,
+          "caught_by_full_set": 78
+        },
+        {
+          "operator": "orphaned_child",
+          "mutants": 12,
+          "caught_by_kept_set": 12,
+          "caught_by_full_set": 12
+        },
+        {
+          "operator": "out_of_range",
+          "mutants": 24,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 12
+        }
+      ]
+    },
+    {
+      "dataset": "Football",
+      "llm": "gpt-oss-120b",
+      "mutants": 188,
+      "caught": 164,
+      "working_tests": 54,
+      "broken_tests": 0,
+      "minimal_set": 19,
+      "heldout_fixed": {
+        "operators": [
+          "date_shift",
+          "orphaned_child",
+          "out_of_range"
+        ],
+        "mutants": 48,
+        "kept_tests": 17,
+        "caught_by_kept_set": 12,
+        "caught_by_full_set": 30,
+        "kept_pct_of_full": 40.0
+      },
+      "leave_one_out_mean_pct_of_full": 44.0,
+      "leave_one_out": [
+        {
+          "operator": "date_shift",
+          "mutants": 12,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 6
+        },
+        {
+          "operator": "double_count",
+          "mutants": 8,
+          "caught_by_kept_set": 8,
+          "caught_by_full_set": 8
+        },
+        {
+          "operator": "duplicate_key",
+          "mutants": 12,
+          "caught_by_kept_set": 12,
+          "caught_by_full_set": 12
+        },
+        {
+          "operator": "invalid_category",
+          "mutants": 42,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 36
+        },
+        {
+          "operator": "null_injection",
+          "mutants": 78,
+          "caught_by_kept_set": 6,
+          "caught_by_full_set": 78
+        },
+        {
+          "operator": "orphaned_child",
+          "mutants": 12,
+          "caught_by_kept_set": 12,
+          "caught_by_full_set": 12
+        },
+        {
+          "operator": "out_of_range",
+          "mutants": 24,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 12
+        }
+      ]
+    },
+    {
+      "dataset": "Olist",
+      "llm": "Gemini 2.5 Flash",
+      "mutants": 427,
+      "caught": 335,
+      "working_tests": 73,
+      "broken_tests": 15,
+      "minimal_set": 57,
+      "heldout_fixed": {
+        "operators": [
+          "date_shift",
+          "orphaned_child",
+          "out_of_range"
+        ],
+        "mutants": 192,
+        "kept_tests": 39,
+        "caught_by_kept_set": 4,
+        "caught_by_full_set": 148,
+        "kept_pct_of_full": 2.7
+      },
+      "leave_one_out_mean_pct_of_full": 43.3,
+      "leave_one_out": [
+        {
+          "operator": "date_shift",
+          "mutants": 48,
+          "caught_by_kept_set": 16,
+          "caught_by_full_set": 28
+        },
+        {
+          "operator": "double_count",
+          "mutants": 15,
+          "caught_by_kept_set": 15,
+          "caught_by_full_set": 15
+        },
+        {
+          "operator": "duplicate_key",
+          "mutants": 20,
+          "caught_by_kept_set": 20,
+          "caught_by_full_set": 20
+        },
+        {
+          "operator": "invalid_category",
+          "mutants": 32,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 32
+        },
+        {
+          "operator": "null_injection",
+          "mutants": 168,
+          "caught_by_kept_set": 16,
+          "caught_by_full_set": 120
+        },
+        {
+          "operator": "orphaned_child",
+          "mutants": 16,
+          "caught_by_kept_set": 4,
+          "caught_by_full_set": 16
+        },
+        {
+          "operator": "out_of_range",
+          "mutants": 128,
+          "caught_by_kept_set": 8,
+          "caught_by_full_set": 104
+        }
+      ]
+    },
+    {
+      "dataset": "Olist",
+      "llm": "gpt-oss-120b",
+      "mutants": 427,
+      "caught": 319,
+      "working_tests": 72,
+      "broken_tests": 17,
+      "minimal_set": 56,
+      "heldout_fixed": {
+        "operators": [
+          "date_shift",
+          "orphaned_child",
+          "out_of_range"
+        ],
+        "mutants": 192,
+        "kept_tests": 38,
+        "caught_by_kept_set": 4,
+        "caught_by_full_set": 140,
+        "kept_pct_of_full": 2.9
+      },
+      "leave_one_out_mean_pct_of_full": 44.7,
+      "leave_one_out": [
+        {
+          "operator": "date_shift",
+          "mutants": 48,
+          "caught_by_kept_set": 16,
+          "caught_by_full_set": 24
+        },
+        {
+          "operator": "double_count",
+          "mutants": 15,
+          "caught_by_kept_set": 15,
+          "caught_by_full_set": 15
+        },
+        {
+          "operator": "duplicate_key",
+          "mutants": 20,
+          "caught_by_kept_set": 20,
+          "caught_by_full_set": 20
+        },
+        {
+          "operator": "invalid_category",
+          "mutants": 32,
+          "caught_by_kept_set": 0,
+          "caught_by_full_set": 24
+        },
+        {
+          "operator": "null_injection",
+          "mutants": 168,
+          "caught_by_kept_set": 16,
+          "caught_by_full_set": 120
+        },
+        {
+          "operator": "orphaned_child",
+          "mutants": 16,
+          "caught_by_kept_set": 4,
+          "caught_by_full_set": 16
+        },
+        {
+          "operator": "out_of_range",
+          "mutants": 128,
+          "caught_by_kept_set": 8,
+          "caught_by_full_set": 100
+        }
+      ]
+    }
+  ],
+  "stability": [
+    {
+      "llm": "Gemini 2.5 Flash",
+      "trial": 1,
+      "tests": 53,
+      "identical_to_trial_1": 53,
+      "detected": 16
+    },
+    {
+      "llm": "Gemini 2.5 Flash",
+      "trial": 2,
+      "tests": 67,
+      "identical_to_trial_1": 52,
+      "detected": 16
+    },
+    {
+      "llm": "Gemini 2.5 Flash",
+      "trial": 3,
+      "tests": 62,
+      "identical_to_trial_1": 50,
+      "detected": 16
+    },
+    {
+      "llm": "Gemini 2.5 Flash",
+      "trial": 4,
+      "tests": 62,
+      "identical_to_trial_1": 53,
+      "detected": 16
+    },
+    {
+      "llm": "Gemini 2.5 Flash",
+      "trial": 5,
+      "tests": 53,
+      "identical_to_trial_1": 50,
+      "detected": 16
+    },
+    {
+      "llm": "gpt-oss-120b",
+      "trial": 1,
+      "tests": 52,
+      "identical_to_trial_1": 52,
+      "detected": 16
+    },
+    {
+      "llm": "gpt-oss-120b",
+      "trial": 2,
+      "tests": 53,
+      "identical_to_trial_1": 47,
+      "detected": 16
+    },
+    {
+      "llm": "gpt-oss-120b",
+      "trial": 3,
+      "tests": 56,
+      "identical_to_trial_1": 46,
+      "detected": 16
+    },
+    {
+      "llm": "gpt-oss-120b",
+      "trial": 4,
+      "tests": 53,
+      "identical_to_trial_1": 46,
+      "detected": 16
+    },
+    {
+      "llm": "gpt-oss-120b",
+      "trial": 5,
+      "tests": 55,
+      "identical_to_trial_1": 47,
+      "detected": 16
+    }
+  ]
+}

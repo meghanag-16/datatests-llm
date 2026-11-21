@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg_olist_orders
+    description: Typed orders, limited to a deterministic sample (var olist_orders).
+  - name: stg_olist_order_items
+    description: Typed order items of the sampled orders.
+  - name: stg_olist_payments
+    description: Typed payments of the sampled orders.
+  - name: stg_olist_reviews
+    description: Typed reviews of the sampled orders.
+  - name: stg_olist_customers
+    description: Typed customers (all; the marts keep those of sampled orders).
+  - name: stg_olist_sellers
+    description: Typed sellers.
+  - name: stg_olist_products
+    description: Typed products with English category names.

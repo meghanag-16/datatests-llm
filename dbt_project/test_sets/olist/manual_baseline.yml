@@ -1,0 +1,40 @@
+# Manual baseline for the Olist models, written in the same spirit as the paper's manual-only
+# baseline for football: only the primary key of each model is tested (unique and not null).
+
+version: 2
+
+models:
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    columns:
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_sellers
+    columns:
+      - name: seller_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_order_items
+    columns:
+      - name: order_item_key
+        data_tests:
+          - unique
+          - not_null

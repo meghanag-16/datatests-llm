@@ -1,0 +1,510 @@
+# Minimal test set chosen by scoring/run.py from: manual_baseline.yml, llm_gemini.yml.
+# Do not edit by hand.
+
+version: 2
+models:
+- name: dim_customers
+  columns:
+  - name: customer_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('fct_orders')
+          field: customer_id
+        config:
+          meta:
+            test_id: dim_customers.customer_id.relationships.19e7e5c0
+            source: llm_gemini
+    - unique:
+        config:
+          meta:
+            test_id: dim_customers.customer_id.unique.8f420d31
+            source: manual_baseline
+  - name: state
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - AC
+          - AL
+          - AM
+          - AP
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MG
+          - MS
+          - MT
+          - PA
+          - PB
+          - PE
+          - PI
+          - PR
+          - RJ
+          - RN
+          - RO
+          - RR
+          - RS
+          - SC
+          - SE
+          - SP
+          - TO
+        config:
+          meta:
+            test_id: dim_customers.state.accepted_values.7b8a4029
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.state.not_null.754a3016
+            source: llm_gemini
+  - name: city
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.city.not_null.f7c41565
+            source: llm_gemini
+  - name: customer_unique_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.customer_unique_id.not_null.66916611
+            source: llm_gemini
+  - name: zip_code_prefix
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.zip_code_prefix.not_null.6b0c68e9
+            source: llm_gemini
+- name: dim_products
+  columns:
+  - name: description_length
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 5000
+        config:
+          meta:
+            test_id: dim_products.description_length.in_range.63c96ca5
+            source: llm_gemini
+  - name: height_cm
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.height_cm.in_range.fbf4b8a5
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.height_cm.not_null.686d80a8
+            source: llm_gemini
+  - name: length_cm
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.length_cm.in_range.fcd18ae4
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.length_cm.not_null.2754ef74
+            source: llm_gemini
+  - name: name_length
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.name_length.in_range.69b41113
+            source: llm_gemini
+  - name: photos_qty
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 50
+        config:
+          meta:
+            test_id: dim_products.photos_qty.in_range.d09ed2b9
+            source: llm_gemini
+  - name: width_cm
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.width_cm.in_range.b0f67197
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.width_cm.not_null.7e6b4d76
+            source: llm_gemini
+  - name: product_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: dim_products.product_id.unique.5d4d0845
+            source: manual_baseline
+  - name: weight_g
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 1000000
+        config:
+          meta:
+            test_id: dim_products.weight_g.in_range.91aa7da6
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.weight_g.not_null.4ed93896
+            source: llm_gemini
+- name: dim_sellers
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: LENGTH(zip_code_prefix) = 5 AND TRY_CAST(zip_code_prefix AS INTEGER) IS NOT NULL
+      config:
+        meta:
+          test_id: dim_sellers._model.expression_is_true.51031524
+          source: llm_gemini
+  columns:
+  - name: state
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - AC
+          - AL
+          - AM
+          - AP
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MG
+          - MS
+          - MT
+          - PA
+          - PB
+          - PE
+          - PI
+          - PR
+          - RJ
+          - RN
+          - RO
+          - RR
+          - RS
+          - SC
+          - SE
+          - SP
+          - TO
+        config:
+          meta:
+            test_id: dim_sellers.state.accepted_values.dd9c42e6
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.state.not_null.b8f261ef
+            source: llm_gemini
+  - name: seller_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: dim_sellers.seller_id.unique.57f77a85
+            source: manual_baseline
+  - name: city
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.city.not_null.e718db43
+            source: llm_gemini
+- name: fct_orders
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: delivery_days IS NULL OR delivery_days = DATE_DIFF('day', purchased_at::DATE, delivered_customer_at::DATE)
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.293ad750
+          source: llm_gemini
+  - expression_is_true:
+      arguments:
+        expression: approved_at IS NULL OR approved_at >= purchased_at
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.40cb5944
+          source: llm_gemini
+  - expression_is_true:
+      arguments:
+        expression: estimated_delivery_date >= purchased_at::DATE
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.ff2da4b1
+          source: llm_gemini
+  columns:
+  - name: customer_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_customers')
+          field: customer_id
+        config:
+          meta:
+            test_id: fct_orders.customer_id.relationships.968245df
+            source: llm_gemini
+  - name: order_status
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - created
+          - approved
+          - invoiced
+          - processing
+          - shipped
+          - delivered
+          - unavailable
+          - canceled
+        config:
+          meta:
+            test_id: fct_orders.order_status.accepted_values.3bc07c9c
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.order_status.not_null.6da4db7d
+            source: llm_gemini
+  - name: payment_installments
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 24
+        config:
+          meta:
+            test_id: fct_orders.payment_installments.in_range.a3ebf381
+            source: llm_gemini
+  - name: payment_type
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - credit_card
+          - debit_card
+          - boleto
+          - voucher
+        config:
+          meta:
+            test_id: fct_orders.payment_type.accepted_values.bc48315b
+            source: llm_gemini
+  - name: review_score
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 5
+        config:
+          meta:
+            test_id: fct_orders.review_score.in_range.f231bece
+            source: llm_gemini
+  - name: order_id
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: fct_orders.order_id.unique.70f847d5
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.order_id.not_null.c91d1256
+            source: manual_baseline
+  - name: estimated_delivery_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.estimated_delivery_date.not_null.7579bd6d
+            source: llm_gemini
+  - name: freight_value
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.freight_value.in_range.fb064991
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.freight_value.not_null.f93e1d63
+            source: llm_gemini
+  - name: item_count
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.item_count.not_null.c75bbade
+            source: llm_gemini
+  - name: items_value
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.items_value.in_range.91fdd4e1
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.items_value.not_null.f3659bc4
+            source: llm_gemini
+  - name: payment_value
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.payment_value.in_range.6f1f1480
+            source: llm_gemini
+  - name: purchased_at
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.purchased_at.not_null.ef9cd37f
+            source: llm_gemini
+- name: fct_order_items
+  columns:
+  - name: freight_value
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0.0
+          max_value: 1000.0
+        config:
+          meta:
+            test_id: fct_order_items.freight_value.in_range.10317e24
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.freight_value.not_null.74e3faa5
+            source: llm_gemini
+  - name: price
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0.01
+          max_value: 10000.0
+        config:
+          meta:
+            test_id: fct_order_items.price.in_range.f4f6291a
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.price.not_null.f5f89512
+            source: llm_gemini
+  - name: product_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_products')
+          field: product_id
+        config:
+          meta:
+            test_id: fct_order_items.product_id.relationships.1429540a
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.product_id.not_null.34f2a7ed
+            source: llm_gemini
+  - name: seller_id
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_sellers')
+          field: seller_id
+        config:
+          meta:
+            test_id: fct_order_items.seller_id.relationships.ed07001e
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.seller_id.not_null.70e6b08f
+            source: llm_gemini
+  - name: order_item_key
+    data_tests:
+    - unique:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_key.unique.c390928f
+            source: manual_baseline
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_key.not_null.ba854df6
+            source: manual_baseline
+  - name: order_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_id.not_null.4670d710
+            source: llm_gemini
+  - name: order_item_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_id.not_null.a2582da0
+            source: llm_gemini
+  - name: shipping_limit_at
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: '2016-01-01'
+          max_value: '2025-01-01'
+        config:
+          meta:
+            test_id: fct_order_items.shipping_limit_at.in_range.f2b8c312
+            source: llm_gemini
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.shipping_limit_at.not_null.bb64e089
+            source: llm_gemini

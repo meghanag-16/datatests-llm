@@ -18,8 +18,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.0",
+    "streamlit>=1.65.0",
 ]
 
 [tool.uv]
 # This is an application, not a library to publish, so uv does not build or install it as a package.
 package = false
+
+[tool.pytest.ini_options]
+# Only look for tests in tests/ (airflow/logs holds Docker links Windows cannot open).
+testpaths = ["tests"]

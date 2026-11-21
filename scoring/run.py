@@ -12,10 +12,16 @@ Steps
   5. Held-out evaluation: choose the minimal set on some operators only and measure it
      on the others (fixed split from scoring/config.yml plus leave-one-operator-out).
 
+Engines (--engine): "fast" (default) compiles the tests once with dbt and runs the compiled SQL
+directly in DuckDB on every mutant (scoring/fast.py); "dbt" runs dbt test on every mutant.
+Both give the same statuses (check with scoring/verify_fast.py) and share saved results.
+
 Run from the data_eng folder:
   uv run python -m scoring.run --test-set manual_baseline.yml llm_gemini.yml
   uv run python -m scoring.run --test-set manual_baseline.yml llm_groq.yml --workers 4
+  uv run python -m scoring.run --dataset olist --test-set manual_baseline.yml llm_gemini.yml
 Outputs: reports/scoring/<name>/ and dbt_project/test_sets/pruned_<name>.yml
+(other datasets: reports/scoring/<dataset>/<name>/ and dbt_project/test_sets/<dataset>/)
 """
 from __future__ import annotations
 
@@ -31,24 +37,24 @@ from pathlib import Path
 
 import yaml
 
-from common.dbt_runner import CLEAN_DB, DBT_DIR, active_test_set, fresh_copy, run_dbt
+from common import datasets
+from common.dbt_runner import active_test_set, fresh_copy, run_dbt
 from llm_tests.context import load_contexts
 from llm_tests.validate import TestSpec, load_test_set, to_yaml
-from scoring.holdout import evaluate_split, leave_one_out
+from scoring import fast
+from scoring.holdout import evaluate_split, leave_one_out, loo_mean as mean_of_folds
 from scoring.prune import TestInfo, classify, coverage, greedy_cover
 
 ROOT = Path(__file__).resolve().parents[1]
-TEST_SETS = DBT_DIR / "test_sets"
-MODELS = ["dim_teams", "fct_matches", "fct_training_dataset"]
 
 
-def resolve(name: str) -> Path:
+def resolve(name: str, test_sets: Path) -> Path:
     p = Path(name)
-    return p if p.exists() else TEST_SETS / name
+    return p if p.exists() else test_sets / name
 
 
-def load_candidates(paths: list[Path]) -> tuple[list[TestSpec], dict[str, str], Counter]:
-    contexts = load_contexts(CLEAN_DB, MODELS, sample_rows=1)
+def load_candidates(paths: list[Path], ds: datasets.Dataset) -> tuple[list[TestSpec], dict[str, str], Counter]:
+    contexts = load_contexts(ds.snapshot, list(ds.models), sample_rows=1)
     specs: list[TestSpec] = []
     origin: dict[str, str] = {}
     duplicates: Counter = Counter()
@@ -62,87 +68,114 @@ def load_candidates(paths: list[Path]) -> tuple[list[TestSpec], dict[str, str], 
     return specs, origin, duplicates
 
 
-def run_on(db: Path, run_name: str, log_dir: Path) -> dict[str, str]:
+def test_set_hash(candidate_text: str) -> str:
+    # Same hash on Windows and Linux (Airflow), so either can reuse the other's saved results.
+    # "v2": results saved before the run lock existed may come from overlapping runs; ignore them.
+    return hashlib.sha1(("v2\n" + candidate_text).encode("utf-8")).hexdigest()[:12]
+
+
+def run_on(db: Path, run_name: str, log_dir: Path, ds: datasets.Dataset) -> dict[str, str]:
     """test_id -> status for one database."""
-    run = run_dbt("test", db, run_name, log_dir, tuple(MODELS))
+    run = run_dbt("test", db, run_name, log_dir, ds.models, dbt_args=ds.dbt_args())
     return {r.test_id: r.status for r in run.results if r.test_id}
 
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--dataset", default="football", choices=list(datasets.DATASETS))
     p.add_argument("--test-set", nargs="+", required=True, help="test set files (manual baseline first)")
-    p.add_argument("--mutants", type=Path, default=ROOT / "data" / "mutants" / "manifest.jsonl")
-    p.add_argument("--config", type=Path, default=ROOT / "scoring" / "config.yml")
-    p.add_argument("--workers", type=int, default=4, help="dbt runs in parallel")
+    p.add_argument("--mutants", type=Path, help="mutation manifest (default: the dataset's manifest.jsonl)")
+    p.add_argument("--config", type=Path, help="held-out split (default: the dataset's scoring config)")
+    p.add_argument("--workers", type=int, default=4, help="mutants scored in parallel")
+    p.add_argument("--engine", choices=["fast", "dbt"], default="fast",
+                   help="fast: compile once, run SQL in DuckDB (default); dbt: dbt test per mutant")
     p.add_argument("--name", help="output name (default: the test set names joined)")
     p.add_argument("--limit", type=int, help="score only the first N mutants (for a quick try)")
     args = p.parse_args()
+    ds = datasets.get(args.dataset)
+    args.mutants = args.mutants or ds.manifest
+    args.config = args.config or ds.scoring_config
+    models = list(ds.models)
 
-    paths = [resolve(t) for t in args.test_set]
+    paths = [resolve(t, ds.test_sets) for t in args.test_set]
     missing = [str(x) for x in paths if not x.exists()]
     if missing:
         print(f"Missing test sets: {missing}")
         return 1
     if not args.mutants.exists():
-        print(f"Missing {args.mutants}. Run: uv run python -m mutations.run")
+        print(f"Missing {args.mutants}. Run: uv run python -m mutations.run --dataset {ds.name}")
         return 1
     name = args.name or "__".join(x.stem for x in paths)
-    out = ROOT / "reports" / "scoring" / name
+    out = ds.report_dir("scoring") / name
     runs_dir = out / "runs"
     runs_dir.mkdir(parents=True, exist_ok=True)
 
-    specs, origin, duplicates = load_candidates(paths)
+    specs, origin, duplicates = load_candidates(paths, ds)
     priority = {x.stem: i for i, x in enumerate(paths)}
     print(f"Candidate tests: {len(specs)} " +
           "(" + ", ".join(f"{k}: {v}" for k, v in Counter(origin.values()).items()) + ")")
 
     mutants = [json.loads(line) for line in args.mutants.read_text(encoding="utf-8").splitlines() if line.strip()]
-    mutants = [m for m in mutants if m.get("status") == "ok" and (ROOT / m["file"]).exists()]
+    mutants = [m for m in mutants if m.get("status") == "ok" and datasets.resolve_file(m["file"]).exists()]
     if args.limit:
         mutants = mutants[: args.limit]
     mutant_ops = {m["mutation_id"]: m["operator"] for m in mutants}
     print(f"Mutants to score: {len(mutants)}")
 
     candidate_file = out / "candidates.yml"
-    candidate_file.write_text(to_yaml(specs, MODELS, "# All candidate tests for scoring."), encoding="utf-8")
-    set_hash = hashlib.sha1(candidate_file.read_bytes()).hexdigest()[:12]
+    candidate_text = to_yaml(specs, models, "# All candidate tests for scoring.")
+    candidate_file.write_text(candidate_text, encoding="utf-8", newline="\n")
+    set_hash = test_set_hash(candidate_text)
 
     statuses: dict[str, dict[str, str]] = {}
     start = time.time()
-    with active_test_set(candidate_file):
-        clean_copy = fresh_copy(CLEAN_DB, f"scoring_clean_{set_hash}")
-        clean_status = run_on(clean_copy, f"scoring_clean_{set_hash}", out / "logs")
-        not_run = [s.test_id for s in specs if s.test_id not in clean_status]
-        if not_run:
-            print(f"WARNING: {len(not_run)} tests did not run on clean data; they are treated as broken.")
+    todo = []
+    for m in mutants:
+        cached = runs_dir / f"{m['mutation_id']}.json"
+        if cached.exists():
+            data = json.loads(cached.read_text(encoding="utf-8"))
+            if data.get("test_set_hash") == set_hash:
+                statuses[m["mutation_id"]] = data["status"]
+                continue
+        todo.append(m)
+    if len(todo) < len(mutants):
+        print(f"Reusing saved results for {len(mutants) - len(todo)} mutants.")
 
-        todo = []
-        for m in mutants:
-            cached = runs_dir / f"{m['mutation_id']}.json"
-            if cached.exists():
-                data = json.loads(cached.read_text(encoding="utf-8"))
-                if data.get("test_set_hash") == set_hash:
-                    statuses[m["mutation_id"]] = data["status"]
-                    continue
-            todo.append(m)
-        if len(todo) < len(mutants):
-            print(f"Reusing saved results for {len(mutants) - len(todo)} mutants.")
+    def save(m: dict, st: dict[str, str]) -> tuple[str, dict[str, str]]:
+        (runs_dir / f"{m['mutation_id']}.json").write_text(
+            json.dumps({"test_set_hash": set_hash, "engine": args.engine, "status": st}), encoding="utf-8")
+        return m["mutation_id"], st
 
-        def work(m: dict) -> tuple[str, dict[str, str]]:
-            st = run_on(ROOT / m["file"], f"scoring_{m['mutation_id']}", out / "logs")
-            (runs_dir / f"{m['mutation_id']}.json").write_text(
-                json.dumps({"test_set_hash": set_hash, "status": st}), encoding="utf-8")
-            return m["mutation_id"], st
+    def run_all(label: str, work) -> None:
+        if not todo:
+            return
+        print(f"Running {label} on {len(todo)} mutants with {args.workers} workers ...")
+        with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+            futures = [pool.submit(work, m) for m in todo]
+            step = 10 if args.engine == "dbt" else 50
+            for i, f in enumerate(as_completed(futures), 1):
+                mid, st = f.result()
+                statuses[mid] = st
+                if i % step == 0 or i == len(todo):
+                    print(f"  {i}/{len(todo)} ({time.time() - start:.0f}s)")
 
-        if todo:
-            print(f"Running dbt on {len(todo)} mutants with {args.workers} workers ...")
-            with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
-                futures = [pool.submit(work, m) for m in todo]
-                for i, f in enumerate(as_completed(futures), 1):
-                    mid, st = f.result()
-                    statuses[mid] = st
-                    if i % 10 == 0 or i == len(todo):
-                        print(f"  {i}/{len(todo)} ({time.time() - start:.0f}s)")
+    if args.engine == "fast":
+        # The test set only has to be swapped in while dbt compiles it.
+        with active_test_set(candidate_file, ds.active_schema):
+            compiled = fast.compile_tests(ds, f"{ds.name}_scoring_compile_{set_hash}", out / "logs")
+        print(f"Compiled {len(compiled)} tests once; running their SQL directly in DuckDB.")
+        clean_status = fast.run_tests(ds.snapshot, compiled)
+        run_all("the compiled tests", lambda m: save(m, fast.run_tests(datasets.resolve_file(m["file"]), compiled)))
+    else:
+        with active_test_set(candidate_file, ds.active_schema):
+            clean_copy = fresh_copy(ds.snapshot, f"{ds.name}_scoring_clean_{set_hash}")
+            clean_status = run_on(clean_copy, f"{ds.name}_scoring_clean_{set_hash}", out / "logs", ds)
+            run_all("dbt", lambda m: save(m, run_on(datasets.resolve_file(m["file"]),
+                                                  f"{ds.name}_scoring_{m['mutation_id']}", out / "logs", ds)))
+    not_run = [s.test_id for s in specs if s.test_id not in clean_status]
+    if not_run:
+        print(f"WARNING: {len(not_run)} tests did not run on clean data; they are treated as broken.")
+    print(f"Scoring time: {time.time() - start:.0f}s")
 
     # ---------------------------------------------------------------- matrix
     tests = [TestInfo(s.test_id, origin[s.test_id], priority[origin[s.test_id]],
@@ -166,11 +199,12 @@ def main() -> int:
     if cfg.get("selection") and cfg.get("heldout"):
         fixed = evaluate_split(tests, catches, mutant_ops, set(cfg["selection"]), set(cfg["heldout"]))
     loo = leave_one_out(tests, catches, mutant_ops)
+    loo_mean = mean_of_folds(loo)
 
     # ---------------------------------------------------------------- outputs
     spec_by_id = {s.test_id: s for s in specs}
-    pruned_path = TEST_SETS / f"pruned_{name}.yml"
-    pruned_path.write_text(to_yaml([spec_by_id[t] for t in kept], MODELS,
+    pruned_path = ds.test_sets / f"pruned_{name}.yml"
+    pruned_path.write_text(to_yaml([spec_by_id[t] for t in kept], models,
                                    f"# Minimal test set chosen by scoring/run.py from: {', '.join(x.name for x in paths)}.\n"
                                    "# Do not edit by hand."), encoding="utf-8")
 
@@ -203,11 +237,12 @@ def main() -> int:
                             "caught_by_kept_set": len(coverage(kept, catches, ms))}
 
     summary = {
-        "name": name, "test_sets": [x.name for x in paths], "candidate_tests": len(specs),
+        "name": name, "dataset": ds.name, "test_sets": [x.name for x in paths], "candidate_tests": len(specs),
         "mutants": len(all_mutants), "mutants_caught": len(detectable), "mutants_never_caught": undetected,
         "classes": dict(Counter(labels.values())), "per_source": per_source, "per_operator": per_operator,
         "kept_tests": kept, "pruned_test_set": str(pruned_path.relative_to(ROOT)),
         "heldout_fixed": fixed, "heldout_leave_one_out": loo,
+        "heldout_leave_one_out_mean_pct_of_full": loo_mean,
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
@@ -236,6 +271,9 @@ def main() -> int:
     print("  leave one operator out:")
     for s in loo:
         print(f"    {s['heldout_operators'][0]:18s} {show(s)}")
+    if loo_mean is not None:
+        print(f"  average over operators: the kept set catches {loo_mean}% of what the full set catches "
+              f"on the held-out operator")
 
     llm_sources = [x.stem for x in paths if not x.stem.startswith("manual")]
     for src in llm_sources:
@@ -244,7 +282,8 @@ def main() -> int:
         redundant = v.get("redundant", 0) + v["identical_to_earlier_set"]
         print(f"\n{src}: {total} generated tests -> useful {v.get('useful', 0)}, redundant {redundant} "
               f"(incl. {v['identical_to_earlier_set']} identical to manual), low-value {v.get('low_value', 0)}, "
-              f"broken {v.get('broken', 0)}. Paper (GPT-4.1-mini, 16 anomalies): 25 -> 9 / 4 / 12.")
+              f"broken {v.get('broken', 0)}."
+              + (" Paper (GPT-4.1-mini, 16 anomalies): 25 -> 9 / 4 / 12." if ds.name == "football" else ""))
     if fixed and fixed["heldout_mutants"]:
         print(f"Held-out headline: pruning on {', '.join(fixed['selection_operators'])} kept "
               f"{fixed['kept_tests']} of {len(live)} tests; on unseen operators they catch "

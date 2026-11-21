@@ -15,6 +15,9 @@ Run from the data_eng folder:
   uv run python -m llm_tests.generate                      # LLM_PROVIDER with fallback
   uv run python -m llm_tests.generate --provider groq      # one provider only
   uv run python -m llm_tests.generate --trial 2            # a fresh generation (new cache entry)
+  uv run python -m llm_tests.generate --dataset olist      # another dataset (see common/datasets.py)
+For a dataset other than football the files go to dbt_project/test_sets/<dataset>/ and
+reports/generation/<dataset>/<name>/.
 """
 from __future__ import annotations
 
@@ -28,7 +31,8 @@ from pathlib import Path
 
 import duckdb
 
-from common.dbt_runner import CLEAN_DB, DBT_DIR, active_test_set, fresh_copy, run_dbt
+from common import datasets
+from common.dbt_runner import active_test_set, fresh_copy, run_dbt
 from llm_tests import cache
 from llm_tests.context import load_contexts
 from llm_tests.prompt_builder import SYSTEM_PROMPT, build_prompt
@@ -37,8 +41,6 @@ from llm_tests.validate import (Rejected, TestSpec, load_test_set, specs_to_dict
                                 validate_reply)
 
 ROOT = Path(__file__).resolve().parents[1]
-TEST_SETS = DBT_DIR / "test_sets"
-DEFAULT_MODELS = ["dim_teams", "fct_matches", "fct_training_dataset"]
 
 
 def slug(text: str) -> str:
@@ -59,17 +61,23 @@ def ask(llm: FallbackLLM | None, providers: list[str], prompt: str, trial: int, 
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--db", type=Path, default=CLEAN_DB, help="database to read schemas and samples from")
-    p.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
+    p.add_argument("--dataset", default="football", choices=list(datasets.DATASETS))
+    p.add_argument("--db", type=Path, help="database to read schemas and samples from (default: clean snapshot)")
+    p.add_argument("--models", nargs="+", help="models to write tests for (default: the dataset's models)")
     p.add_argument("--sample-rows", type=int, default=10)
     p.add_argument("--provider", help="use only this provider (no fallback)")
     p.add_argument("--name", help="test set name (default: llm_<provider>)")
     p.add_argument("--trial", type=int, default=0, help="change to force a fresh generation")
     p.add_argument("--no-cache", action="store_true", help="ignore cached replies")
-    p.add_argument("--manual", type=Path, default=TEST_SETS / "manual_baseline.yml",
-                   help="manual test set to merge with")
+    p.add_argument("--manual", type=Path, help="manual test set to merge with (default: manual_baseline.yml)")
     p.add_argument("--skip-dbt", action="store_true", help="do not run the generated tests in dbt")
     args = p.parse_args()
+    ds = datasets.get(args.dataset)
+    args.db = args.db or ds.snapshot
+    args.models = args.models or list(ds.models)
+    args.manual = args.manual or ds.manual_baseline
+    test_sets = ds.test_sets
+    test_sets.mkdir(parents=True, exist_ok=True)
 
     if not args.db.exists():
         print(f"Missing {args.db}. Build the models and run scripts/snapshot_clean.py first.")
@@ -124,7 +132,7 @@ def main() -> int:
     name = slug(args.name) if args.name else "llm_" + (used[0] if len(used) == 1 else "mixed")
     if args.trial and not args.name:
         name += f"_trial{args.trial}"
-    out_dir = ROOT / "reports" / "generation" / name
+    out_dir = ds.report_dir("generation") / name
     (out_dir / "replies").mkdir(parents=True, exist_ok=True)
     for model, rep in replies.items():
         (out_dir / "replies" / f"{model}.prompt.txt").write_text(rep["prompt"], encoding="utf-8")
@@ -133,16 +141,17 @@ def main() -> int:
     meta = {"generator": name}
     header = (f"# LLM-generated dbt tests ({name}).\n# Written by llm_tests/generate.py; "
               f"providers: {', '.join(used) or 'cache'}. Do not edit by hand.")
-    gen_path = TEST_SETS / f"{name}.yml"
+    gen_path = test_sets / f"{name}.yml"
 
     # Run the tests once in dbt on a copy of the clean data.
     dbt_report = {}
     if not args.skip_dbt:
         gen_path.write_text(to_yaml(kept, args.models, header, meta), encoding="utf-8")
         print(f"\nRunning the {len(kept)} kept tests in dbt on a copy of the clean snapshot ...")
-        db_copy = fresh_copy(args.db, f"generation_check_{name}")
-        with active_test_set(gen_path):
-            run = run_dbt("test", db_copy, f"generation_check_{name}", out_dir, tuple(args.models))
+        work_name = f"{ds.name}_generation_check_{name}"
+        db_copy = fresh_copy(args.db, work_name)
+        with active_test_set(gen_path, ds.active_schema):
+            run = run_dbt("test", db_copy, work_name, out_dir, tuple(args.models), dbt_args=ds.dbt_args())
         status = {r.test_id: r for r in run.results if r.test_id}
         errored = [s for s in kept if s.test_id in status and status[s.test_id].status == "error"]
         missing = [s for s in kept if s.test_id not in status]
@@ -167,13 +176,14 @@ def main() -> int:
         manual_ids = {s.test_id for s in manual}
         duplicates = [s.test_id for s in kept if s.test_id in manual_ids]
         merged = manual + [s for s in kept if s.test_id not in manual_ids]
-        merged_path = TEST_SETS / f"manual_plus_{name}.yml"
+        merged_path = test_sets / f"manual_plus_{name}.yml"
         merged_header = (f"# Manual baseline ({args.manual.name}) plus LLM-generated tests ({name}).\n"
                          f"# Written by llm_tests/generate.py. Do not edit by hand.")
         merged_path.write_text(to_yaml(merged, args.models, merged_header), encoding="utf-8")
 
     report = {
         "name": name,
+        "dataset": ds.name,
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "database": str(args.db),
         "models": per_model,

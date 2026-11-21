@@ -1,0 +1,6 @@
+# Only the dependency files are needed to build the Airflow image; the project folder
+# itself is mounted into the containers at run time.
+*
+!pyproject.toml
+!uv.lock
+!.python-version

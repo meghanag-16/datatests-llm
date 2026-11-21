@@ -9,6 +9,25 @@ macro-paths: ["macros"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+# One dataset is built at a time. Football is the default; for the Olist models pass
+#   --vars "{dataset: olist}"
+# (scripts/build_dataset.py does this for you).
+vars:
+  olist_orders: 5000      # orders kept from the Olist data (deterministic sample)
+
 models:
   data_eng:
     +materialized: table
+    staging:
+      +enabled: "{{ var('dataset', 'football') == 'football' }}"
+    marts:
+      +enabled: "{{ var('dataset', 'football') == 'football' }}"
+    olist:
+      +enabled: "{{ var('dataset', 'football') == 'olist' }}"
+
+sources:
+  data_eng:
+    staging:
+      +enabled: "{{ var('dataset', 'football') == 'football' }}"
+    olist:
+      +enabled: "{{ var('dataset', 'football') == 'olist' }}"

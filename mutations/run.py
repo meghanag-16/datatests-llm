@@ -9,7 +9,8 @@ Run from the data_eng folder:
   uv run python -m mutations.run                       # all operators, football config
   uv run python -m mutations.run --plan-only           # list what would be created
   uv run python -m mutations.run --operators null_injection date_shift
-Outputs: data/mutants/<mutation_id>.duckdb and data/mutants/manifest.jsonl
+  uv run python -m mutations.run --dataset olist          # data/mutants/olist/
+Outputs: data/mutants/<mutation_id>.duckdb and data/mutants/manifest.jsonl (football)
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from pathlib import Path
 
 import duckdb
 
+from common import datasets
 from mutations.catalog import build_catalog, load_config
 from mutations.operators import OPERATORS, apply
 from mutations.plan import plan_mutations
@@ -38,16 +40,21 @@ def fingerprint(con, table: str) -> tuple[int, int]:
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--snapshot", type=Path, default=ROOT / "data" / "snapshots" / "dbt.clean.duckdb")
-    p.add_argument("--config", type=Path, default=ROOT / "mutations" / "config" / "football.yml")
-    p.add_argument("--out", type=Path, default=ROOT / "data" / "mutants")
+    p.add_argument("--dataset", default="football", choices=list(datasets.DATASETS))
+    p.add_argument("--snapshot", type=Path, help="clean database (default: the dataset's snapshot)")
+    p.add_argument("--config", type=Path, help="mutation config (default: mutations/config/<dataset>.yml)")
+    p.add_argument("--out", type=Path, help="output folder (default: the dataset's mutants folder)")
     p.add_argument("--operators", nargs="+", choices=list(OPERATORS))
     p.add_argument("--limit", type=int, help="create at most this many mutants")
     p.add_argument("--plan-only", action="store_true")
     args = p.parse_args()
+    ds = datasets.get(args.dataset)
+    args.snapshot = args.snapshot or ds.snapshot
+    args.config = args.config or ds.mutation_config
+    args.out = args.out or ds.mutants
 
     if not args.snapshot.exists():
-        print(f"Missing {args.snapshot}. Run scripts/snapshot_clean.py first.")
+        print(f"Missing {args.snapshot}. Run: uv run python scripts/snapshot_clean.py --dataset {ds.name}")
         return 1
     config = load_config(args.config)
     clean = duckdb.connect(str(args.snapshot), read_only=True)
@@ -94,7 +101,7 @@ def main() -> int:
         status = "ok" if changed > 0 and differs else "no_effect"
         status_count[(m.operator, status)] += 1
         records.append({**m.to_dict(), "rows_changed": changed, "differs_from_clean": differs,
-                        "status": status, "file": str(path.relative_to(ROOT))})
+                        "status": status, "file": path.relative_to(ROOT).as_posix()})
         if i % 25 == 0 or i == len(plan):
             print(f"  {i}/{len(plan)} done ({time.time() - start:.0f}s)")
 

@@ -1,0 +1,824 @@
+# LLM-generated dbt tests (llm_groq).
+# Written by llm_tests/generate.py; providers: groq. Do not edit by hand.
+
+version: 2
+models:
+- name: dim_customers
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: length(zip_code_prefix) = 5
+      config:
+        meta:
+          test_id: dim_customers._model.expression_is_true.c0bb96fc
+          source: llm
+          generator: llm_groq
+  columns:
+  - name: customer_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.customer_id.not_null.2d5ac395
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: dim_customers.customer_id.unique.8f420d31
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_orders')
+          field: customer_id
+        config:
+          meta:
+            test_id: dim_customers.customer_id.relationships.19e7e5c0
+            source: llm
+            generator: llm_groq
+  - name: customer_unique_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.customer_unique_id.not_null.66916611
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: dim_customers.customer_unique_id.unique.6a0eab5c
+            source: llm
+            generator: llm_groq
+  - name: zip_code_prefix
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.zip_code_prefix.not_null.6b0c68e9
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('dim_sellers')
+          field: zip_code_prefix
+        config:
+          meta:
+            test_id: dim_customers.zip_code_prefix.relationships.e6d0de1f
+            source: llm
+            generator: llm_groq
+  - name: city
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.city.not_null.f7c41565
+            source: llm
+            generator: llm_groq
+  - name: state
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_customers.state.not_null.754a3016
+            source: llm
+            generator: llm_groq
+    - accepted_values:
+        arguments:
+          values:
+          - AC
+          - AL
+          - AP
+          - AM
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MT
+          - MS
+          - MG
+          - PA
+          - PB
+          - PR
+          - PE
+          - PI
+          - RJ
+          - RN
+          - RS
+          - RO
+          - RR
+          - SC
+          - SP
+          - SE
+          - TO
+        config:
+          meta:
+            test_id: dim_customers.state.accepted_values.50c879d9
+            source: llm
+            generator: llm_groq
+- name: dim_products
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: (weight_g > 0) AND (length_cm > 0) AND (height_cm > 0) AND (width_cm > 0)
+      config:
+        meta:
+          test_id: dim_products._model.expression_is_true.546f3c0f
+          source: llm
+          generator: llm_groq
+  columns:
+  - name: product_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.product_id.not_null.c9a089ae
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: dim_products.product_id.unique.5d4d0845
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_order_items')
+          field: product_id
+        config:
+          meta:
+            test_id: dim_products.product_id.relationships.c455a03d
+            source: llm
+            generator: llm_groq
+  - name: category
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.category.not_null.26933dfd
+            source: llm
+            generator: llm_groq
+    - accepted_values:
+        arguments:
+          values:
+          - baby
+          - sports_leisure
+          - health_beauty
+          - office_furniture
+          - telephony
+          - home_appliances
+          - toys
+          - auto
+          - furniture_living_room
+        config:
+          meta:
+            test_id: dim_products.category.accepted_values.25157da7
+            source: llm
+            generator: llm_groq
+  - name: name_length
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.name_length.not_null.9fdc7acf
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 255
+        config:
+          meta:
+            test_id: dim_products.name_length.in_range.1af3c417
+            source: llm
+            generator: llm_groq
+  - name: description_length
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.description_length.not_null.c89ab799
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 5000
+        config:
+          meta:
+            test_id: dim_products.description_length.in_range.63c96ca5
+            source: llm
+            generator: llm_groq
+  - name: photos_qty
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.photos_qty.not_null.6d14a0fe
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 20
+        config:
+          meta:
+            test_id: dim_products.photos_qty.in_range.d5379884
+            source: llm
+            generator: llm_groq
+  - name: weight_g
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.weight_g.not_null.4ed93896
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 200000
+        config:
+          meta:
+            test_id: dim_products.weight_g.in_range.2f138f49
+            source: llm
+            generator: llm_groq
+  - name: length_cm
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.length_cm.not_null.2754ef74
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.length_cm.in_range.54c445ae
+            source: llm
+            generator: llm_groq
+  - name: height_cm
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.height_cm.not_null.686d80a8
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.height_cm.in_range.27f7ed35
+            source: llm
+            generator: llm_groq
+  - name: width_cm
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_products.width_cm.not_null.7e6b4d76
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 500
+        config:
+          meta:
+            test_id: dim_products.width_cm.in_range.5e7cc0f5
+            source: llm
+            generator: llm_groq
+- name: dim_sellers
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: length(zip_code_prefix) = 5
+      config:
+        meta:
+          test_id: dim_sellers._model.expression_is_true.d7551064
+          source: llm
+          generator: llm_groq
+  columns:
+  - name: seller_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.seller_id.not_null.06ffba0c
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: dim_sellers.seller_id.unique.57f77a85
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_order_items')
+          field: seller_id
+        config:
+          meta:
+            test_id: dim_sellers.seller_id.relationships.b5bc8108
+            source: llm
+            generator: llm_groq
+  - name: zip_code_prefix
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.zip_code_prefix.not_null.3c1ddc0b
+            source: llm
+            generator: llm_groq
+  - name: city
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.city.not_null.e718db43
+            source: llm
+            generator: llm_groq
+  - name: state
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_sellers.state.not_null.b8f261ef
+            source: llm
+            generator: llm_groq
+    - accepted_values:
+        arguments:
+          values:
+          - AC
+          - AL
+          - AP
+          - AM
+          - BA
+          - CE
+          - DF
+          - ES
+          - GO
+          - MA
+          - MT
+          - MS
+          - MG
+          - PA
+          - PB
+          - PR
+          - PE
+          - PI
+          - RJ
+          - RN
+          - RS
+          - RO
+          - RR
+          - SC
+          - SP
+          - SE
+          - TO
+        config:
+          meta:
+            test_id: dim_sellers.state.accepted_values.8fb4c83d
+            source: llm
+            generator: llm_groq
+- name: fct_orders
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: approved_at >= purchased_at
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.dc2005c7
+          source: llm
+          generator: llm_groq
+  - expression_is_true:
+      arguments:
+        expression: CASE WHEN delivered_carrier_at IS NOT NULL THEN delivered_carrier_at >= approved_at ELSE TRUE END
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.236a75b3
+          source: llm
+          generator: llm_groq
+  - expression_is_true:
+      arguments:
+        expression: CASE WHEN delivered_customer_at IS NOT NULL THEN delivered_customer_at >= delivered_carrier_at ELSE TRUE
+          END
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.e1b9b254
+          source: llm
+          generator: llm_groq
+  - expression_is_true:
+      arguments:
+        expression: estimated_delivery_date >= CAST(purchased_at AS DATE)
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.90bbdc32
+          source: llm
+          generator: llm_groq
+  - expression_is_true:
+      arguments:
+        expression: CASE WHEN delivered_customer_at IS NOT NULL THEN delivery_days = DATEDIFF('day', purchased_at, delivered_customer_at)
+          ELSE TRUE END
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.80ff2cc2
+          source: llm
+          generator: llm_groq
+  - expression_is_true:
+      arguments:
+        expression: payment_value = items_value + freight_value
+      config:
+        meta:
+          test_id: fct_orders._model.expression_is_true.c48cd88c
+          source: llm
+          generator: llm_groq
+  columns:
+  - name: order_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.order_id.not_null.c91d1256
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: fct_orders.order_id.unique.70f847d5
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_order_items')
+          field: order_id
+        config:
+          meta:
+            test_id: fct_orders.order_id.relationships.a20eabbd
+            source: llm
+            generator: llm_groq
+  - name: customer_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.customer_id.not_null.bc24a5a4
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('dim_customers')
+          field: customer_id
+        config:
+          meta:
+            test_id: fct_orders.customer_id.relationships.968245df
+            source: llm
+            generator: llm_groq
+  - name: order_status
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.order_status.not_null.6da4db7d
+            source: llm
+            generator: llm_groq
+    - accepted_values:
+        arguments:
+          values:
+          - delivered
+          - processing
+          - cancelled
+          - shipped
+          - returned
+          - pending
+        config:
+          meta:
+            test_id: fct_orders.order_status.accepted_values.7a98b289
+            source: llm
+            generator: llm_groq
+  - name: purchased_at
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.purchased_at.not_null.ef9cd37f
+            source: llm
+            generator: llm_groq
+  - name: approved_at
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.approved_at.not_null.27a94ab2
+            source: llm
+            generator: llm_groq
+  - name: delivered_carrier_at
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+        config:
+          meta:
+            test_id: fct_orders.delivered_carrier_at.in_range.16525596
+            source: llm
+            generator: llm_groq
+  - name: delivered_customer_at
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+        config:
+          meta:
+            test_id: fct_orders.delivered_customer_at.in_range.7929616c
+            source: llm
+            generator: llm_groq
+  - name: estimated_delivery_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.estimated_delivery_date.not_null.7579bd6d
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+        config:
+          meta:
+            test_id: fct_orders.estimated_delivery_date.in_range.26b34b51
+            source: llm
+            generator: llm_groq
+  - name: item_count
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.item_count.not_null.c75bbade
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_orders.item_count.in_range.e184066a
+            source: llm
+            generator: llm_groq
+  - name: items_value
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.items_value.not_null.f3659bc4
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.items_value.in_range.91fdd4e1
+            source: llm
+            generator: llm_groq
+  - name: freight_value
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.freight_value.not_null.f93e1d63
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.freight_value.in_range.fb064991
+            source: llm
+            generator: llm_groq
+  - name: payment_value
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.payment_value.not_null.b2ed5bb8
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.payment_value.in_range.6f1f1480
+            source: llm
+            generator: llm_groq
+  - name: payment_installments
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.payment_installments.not_null.e3082fae
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_orders.payment_installments.in_range.2803b93c
+            source: llm
+            generator: llm_groq
+  - name: payment_type
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_orders.payment_type.not_null.32f3ca01
+            source: llm
+            generator: llm_groq
+    - accepted_values:
+        arguments:
+          values:
+          - boleto
+          - credit_card
+          - debit_card
+          - voucher
+          - paypal
+        config:
+          meta:
+            test_id: fct_orders.payment_type.accepted_values.2f766084
+            source: llm
+            generator: llm_groq
+  - name: review_score
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 1
+          max_value: 5
+        config:
+          meta:
+            test_id: fct_orders.review_score.in_range.f231bece
+            source: llm
+            generator: llm_groq
+  - name: delivery_days
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_orders.delivery_days.in_range.118b1f01
+            source: llm
+            generator: llm_groq
+- name: fct_order_items
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: price >= 0 and freight_value >= 0
+      config:
+        meta:
+          test_id: fct_order_items._model.expression_is_true.6ff78a6c
+          source: llm
+          generator: llm_groq
+  columns:
+  - name: order_item_key
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_key.not_null.ba854df6
+            source: llm
+            generator: llm_groq
+    - unique:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_key.unique.c390928f
+            source: llm
+            generator: llm_groq
+  - name: order_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_id.not_null.4670d710
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('fct_orders')
+          field: order_id
+        config:
+          meta:
+            test_id: fct_order_items.order_id.relationships.2db7c78b
+            source: llm
+            generator: llm_groq
+  - name: order_item_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.order_item_id.not_null.a2582da0
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_order_items.order_item_id.in_range.a1ff4072
+            source: llm
+            generator: llm_groq
+  - name: product_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.product_id.not_null.34f2a7ed
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('dim_products')
+          field: product_id
+        config:
+          meta:
+            test_id: fct_order_items.product_id.relationships.1429540a
+            source: llm
+            generator: llm_groq
+  - name: seller_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.seller_id.not_null.70e6b08f
+            source: llm
+            generator: llm_groq
+    - relationships:
+        arguments:
+          to: ref('dim_sellers')
+          field: seller_id
+        config:
+          meta:
+            test_id: fct_order_items.seller_id.relationships.ed07001e
+            source: llm
+            generator: llm_groq
+  - name: shipping_limit_at
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.shipping_limit_at.not_null.bb64e089
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: '2000-01-01'
+          max_value: '2030-01-01'
+        config:
+          meta:
+            test_id: fct_order_items.shipping_limit_at.in_range.85e444c7
+            source: llm
+            generator: llm_groq
+  - name: price
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.price.not_null.f5f89512
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 10000
+        config:
+          meta:
+            test_id: fct_order_items.price.in_range.4ef7e0f5
+            source: llm
+            generator: llm_groq
+  - name: freight_value
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_order_items.freight_value.not_null.74e3faa5
+            source: llm
+            generator: llm_groq
+    - in_range:
+        arguments:
+          min_value: 0
+          max_value: 5000
+        config:
+          meta:
+            test_id: fct_order_items.freight_value.in_range.8224a195
+            source: llm
+            generator: llm_groq

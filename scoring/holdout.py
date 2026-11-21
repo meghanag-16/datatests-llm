@@ -42,3 +42,10 @@ def evaluate_split(tests: list[TestInfo], catches: dict[str, set[str]], mutant_o
 def leave_one_out(tests, catches, mutant_ops: dict[str, str]) -> list[dict]:
     ops = sorted(set(mutant_ops.values()))
     return [evaluate_split(tests, catches, mutant_ops, set(ops) - {op}, {op}) for op in ops]
+
+
+def loo_mean(folds: list[dict]) -> float | None:
+    """Average share of the full set's held-out catches that the kept set keeps, over the
+    operators the full set can catch at all (an operator nothing catches says nothing)."""
+    scored = [f for f in folds if f["heldout_caught_by_full_set"]]
+    return round(sum(f["kept_pct_of_full_on_heldout"] for f in scored) / len(scored), 1) if scored else None

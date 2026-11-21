@@ -1,0 +1,529 @@
+# LLM-generated dbt tests (llm_gemini_trial3).
+# Written by llm_tests/generate.py; providers: gemini. Do not edit by hand.
+
+version: 2
+models:
+- name: dim_teams
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: LENGTH(team_name) > 0
+      config:
+        meta:
+          test_id: dim_teams._model.expression_is_true.951f8efc
+          source: llm
+          generator: llm_gemini_trial3
+  columns:
+  - name: team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_teams.team_id.not_null.1af3dabe
+            source: llm
+            generator: llm_gemini_trial3
+    - unique:
+        config:
+          meta:
+            test_id: dim_teams.team_id.unique.5c9404f0
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: dim_teams.team_id.in_range.93936a1f
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: home_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.cce03189
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: away_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.6fad3167
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: home_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.eb4e31b8
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: away_team_id
+        config:
+          meta:
+            test_id: dim_teams.team_id.relationships.fb5e4aa9
+            source: llm
+            generator: llm_gemini_trial3
+  - name: team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: dim_teams.team_name.not_null.404ecce5
+            source: llm
+            generator: llm_gemini_trial3
+    - unique:
+        config:
+          meta:
+            test_id: dim_teams.team_name.unique.11b0dc0b
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: home_team_name
+        config:
+          meta:
+            test_id: dim_teams.team_name.relationships.8a1cb372
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: away_team_name
+        config:
+          meta:
+            test_id: dim_teams.team_name.relationships.c2872cb2
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: home_team_name
+        config:
+          meta:
+            test_id: dim_teams.team_name.relationships.72de3675
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: away_team_name
+        config:
+          meta:
+            test_id: dim_teams.team_name.relationships.f2cb308e
+            source: llm
+            generator: llm_gemini_trial3
+- name: fct_matches
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: home_team_id <> away_team_id
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.41e06d57
+          source: llm
+          generator: llm_gemini_trial3
+  - expression_is_true:
+      arguments:
+        expression: home_team_name <> away_team_name
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.1a5b5c17
+          source: llm
+          generator: llm_gemini_trial3
+  - expression_is_true:
+      arguments:
+        expression: NOT (match_status = 'Match Finished' AND (home_team_score IS NULL OR away_team_score IS NULL))
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.f6f13494
+          source: llm
+          generator: llm_gemini_trial3
+  - expression_is_true:
+      arguments:
+        expression: season ~ '^[0-9]{4}-[0-9]{4}$'
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.53755f60
+          source: llm
+          generator: llm_gemini_trial3
+  - expression_is_true:
+      arguments:
+        expression: CAST(SUBSTRING(season, 1, 4) AS INTEGER) <= EXTRACT(YEAR FROM match_date) AND EXTRACT(YEAR FROM match_date)
+          <= CAST(SUBSTRING(season, 6, 4) AS INTEGER)
+      config:
+        meta:
+          test_id: fct_matches._model.expression_is_true.c6af78c0
+          source: llm
+          generator: llm_gemini_trial3
+  columns:
+  - name: match_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_id.not_null.0b1efeed
+            source: llm
+            generator: llm_gemini_trial3
+    - unique:
+        config:
+          meta:
+            test_id: fct_matches.match_id.unique.7f8e2dc4
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_training_dataset')
+          field: match_id
+        config:
+          meta:
+            test_id: fct_matches.match_id.relationships.74d3750e
+            source: llm
+            generator: llm_gemini_trial3
+  - name: league_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.league_id.not_null.a851ce1c
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_matches.league_id.in_range.efebc0e9
+            source: llm
+            generator: llm_gemini_trial3
+  - name: season
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.season.not_null.5a9cc818
+            source: llm
+            generator: llm_gemini_trial3
+  - name: match_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_date.not_null.b6a39e2e
+            source: llm
+            generator: llm_gemini_trial3
+  - name: match_status
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.match_status.not_null.12116396
+            source: llm
+            generator: llm_gemini_trial3
+    - accepted_values:
+        arguments:
+          values:
+          - Match Finished
+          - Scheduled
+          - Postponed
+          - Cancelled
+          - Live
+        config:
+          meta:
+            test_id: fct_matches.match_status.accepted_values.447f360f
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_id.not_null.6d2ca6bb
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_id
+        config:
+          meta:
+            test_id: fct_matches.home_team_id.relationships.a4085718
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_matches.home_team_id.in_range.ee633619
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.home_team_name.not_null.d527f2eb
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_team_score
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_matches.home_team_score.in_range.d30f5b9e
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_id.not_null.be97e493
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_id
+        config:
+          meta:
+            test_id: fct_matches.away_team_id.relationships.40a9aa5e
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_matches.away_team_id.in_range.00e1633b
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_matches.away_team_name.not_null.5148c9d8
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_team_score
+    data_tests:
+    - in_range:
+        arguments:
+          min_value: 0
+        config:
+          meta:
+            test_id: fct_matches.away_team_score.in_range.e10eab13
+            source: llm
+            generator: llm_gemini_trial3
+- name: fct_training_dataset
+  data_tests:
+  - expression_is_true:
+      arguments:
+        expression: home_team_id != away_team_id
+      config:
+        meta:
+          test_id: fct_training_dataset._model.expression_is_true.8306b710
+          source: llm
+          generator: llm_gemini_trial3
+  columns:
+  - name: match_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.match_id.not_null.171a6b53
+            source: llm
+            generator: llm_gemini_trial3
+    - unique:
+        config:
+          meta:
+            test_id: fct_training_dataset.match_id.unique.25baa864
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('fct_matches')
+          field: match_id
+        config:
+          meta:
+            test_id: fct_training_dataset.match_id.relationships.d10f50bc
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_training_dataset.match_id.in_range.6a78432f
+            source: llm
+            generator: llm_gemini_trial3
+  - name: match_date
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.match_date.not_null.6b54d26d
+            source: llm
+            generator: llm_gemini_trial3
+  - name: match_result
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.match_result.not_null.dbfa2328
+            source: llm
+            generator: llm_gemini_trial3
+    - accepted_values:
+        arguments:
+          values:
+          - HOME_WIN
+          - AWAY_WIN
+          - DRAW
+        config:
+          meta:
+            test_id: fct_training_dataset.match_result.accepted_values.53f5965b
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.home_team_id.not_null.77fc9319
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_id
+        config:
+          meta:
+            test_id: fct_training_dataset.home_team_id.relationships.1369ceb2
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_training_dataset.home_team_id.in_range.d802e790
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.home_team_name.not_null.7bcacefc
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_avg_goals_scored_last_5
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_scored_last_5.not_null.6d3b0f01
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 0.0
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_scored_last_5.in_range.91d5f519
+            source: llm
+            generator: llm_gemini_trial3
+  - name: home_avg_goals_conceded_last_5
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_conceded_last_5.not_null.0a6fa6a1
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 0.0
+        config:
+          meta:
+            test_id: fct_training_dataset.home_avg_goals_conceded_last_5.in_range.f96625ed
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_team_id
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.away_team_id.not_null.4fb7afaf
+            source: llm
+            generator: llm_gemini_trial3
+    - relationships:
+        arguments:
+          to: ref('dim_teams')
+          field: team_id
+        config:
+          meta:
+            test_id: fct_training_dataset.away_team_id.relationships.c8597710
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 1
+        config:
+          meta:
+            test_id: fct_training_dataset.away_team_id.in_range.f7f9c509
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_team_name
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.away_team_name.not_null.916fba62
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_avg_goals_scored_last_5
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.away_avg_goals_scored_last_5.not_null.3f4da606
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 0.0
+        config:
+          meta:
+            test_id: fct_training_dataset.away_avg_goals_scored_last_5.in_range.e80baa2e
+            source: llm
+            generator: llm_gemini_trial3
+  - name: away_avg_goals_conceded_last_5
+    data_tests:
+    - not_null:
+        config:
+          meta:
+            test_id: fct_training_dataset.away_avg_goals_conceded_last_5.not_null.4f8861a6
+            source: llm
+            generator: llm_gemini_trial3
+    - in_range:
+        arguments:
+          min_value: 0.0
+        config:
+          meta:
+            test_id: fct_training_dataset.away_avg_goals_conceded_last_5.in_range.10502f7e
+            source: llm
+            generator: llm_gemini_trial3

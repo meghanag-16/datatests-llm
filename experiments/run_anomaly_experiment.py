@@ -36,6 +36,9 @@ from pathlib import Path
 
 import duckdb
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # run as a script from data_eng
+from common.dbt_runner import protected_schema  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 DBT_DIR = ROOT / "dbt_project"
 TEST_SETS = DBT_DIR / "test_sets"
@@ -263,11 +266,15 @@ def run_one(batch_id: str, condition: str, schema_source: Path) -> dict:
 
 
 def main() -> int:
+    global OUTPUT_DIR
     p = argparse.ArgumentParser()
     p.add_argument("--conditions", nargs="+", choices=list(CONDITIONS), default=list(CONDITIONS))
     p.add_argument("--test-set", nargs="+", default=[], metavar="FILE",
                    help="extra test set(s) from dbt_project/test_sets to run, e.g. manual_plus_llm_gemini.yml")
+    p.add_argument("--out", type=Path, default=OUTPUT_DIR,
+                   help="results folder (default: reports/anomaly_results)")
     args = p.parse_args()
+    OUTPUT_DIR = args.out if args.out.is_absolute() else ROOT / args.out
     for f in args.test_set:
         path = Path(f) if Path(f).is_absolute() or Path(f).exists() else TEST_SETS / f
         name = path.stem
@@ -285,17 +292,16 @@ def main() -> int:
     TEMP_DB_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    original_schema = ACTIVE_SCHEMA.read_bytes()
-    (OUTPUT_DIR / "schema.yml.before_experiment").write_bytes(original_schema)
     results: list[dict] = []
-    try:
+    # protected_schema keeps a backup while test sets are swapped in and restores the file
+    # afterwards, also after a run that was killed before it could clean up.
+    with protected_schema(ACTIVE_SCHEMA) as original_schema:
+        (OUTPUT_DIR / "schema.yml.before_experiment").write_bytes(original_schema)
         print("Running batches (each run starts from a fresh copy of the clean snapshot):")
         for batch_id in BATCHES:
             for condition in args.conditions:
                 results.append(run_one(batch_id, condition, CONDITIONS[condition]))
-    finally:
-        ACTIVE_SCHEMA.write_bytes(original_schema)
-        print(f"Restored {ACTIVE_SCHEMA.relative_to(ROOT)}")
+    print(f"Restored {ACTIVE_SCHEMA.relative_to(ROOT)}")
 
     summary = {}
     print("\nTotals:")

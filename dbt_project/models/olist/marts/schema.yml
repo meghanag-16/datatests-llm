@@ -1,0 +1,74 @@
+version: 2
+
+# Model and column descriptions only. Test sets live in dbt_project/test_sets/olist/ and are
+# swapped into this file for a test run (the original is restored afterwards).
+models:
+  - name: dim_customers
+    description: Customers of the sampled Olist orders.
+    columns:
+      - name: customer_id
+        description: Customer key of one order.
+      - name: customer_unique_id
+        description: Identifies the same person across orders.
+      - name: zip_code_prefix
+      - name: city
+      - name: state
+        description: Brazilian state code.
+
+  - name: dim_products
+    description: Products sold in the sampled orders.
+    columns:
+      - name: product_id
+      - name: category
+        description: Product category in English (Portuguese when no translation exists).
+      - name: name_length
+      - name: description_length
+      - name: photos_qty
+      - name: weight_g
+      - name: length_cm
+      - name: height_cm
+      - name: width_cm
+
+  - name: dim_sellers
+    description: Sellers of the sampled orders.
+    columns:
+      - name: seller_id
+      - name: zip_code_prefix
+      - name: city
+      - name: state
+
+  - name: fct_orders
+    description: One row per sampled order with item, payment and review totals.
+    columns:
+      - name: order_id
+      - name: customer_id
+      - name: order_status
+      - name: purchased_at
+      - name: approved_at
+      - name: delivered_carrier_at
+      - name: delivered_customer_at
+      - name: estimated_delivery_date
+      - name: item_count
+      - name: items_value
+      - name: freight_value
+      - name: payment_value
+      - name: payment_installments
+      - name: payment_type
+        description: Payment type that paid the largest share of the order.
+      - name: review_score
+        description: Score of the latest review (1 to 5).
+      - name: delivery_days
+        description: Days from purchase to delivery to the customer.
+
+  - name: fct_order_items
+    description: One row per item of a sampled order.
+    columns:
+      - name: order_item_key
+        description: order_id and order_item_id joined with '-'.
+      - name: order_id
+      - name: order_item_id
+      - name: product_id
+      - name: seller_id
+      - name: shipping_limit_at
+      - name: price
+      - name: freight_value

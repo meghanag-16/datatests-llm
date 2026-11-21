@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: olist_raw
+    schema: raw
+    description: >
+      Olist Brazilian E-Commerce public dataset (Kaggle, olistbr/brazilian-ecommerce), loaded
+      as text columns by scripts/load_olist.py. Types are set in the staging models.
+    tables:
+      - name: orders
+      - name: customers
+      - name: order_items
+      - name: order_payments
+      - name: order_reviews
+      - name: products
+      - name: sellers
+      - name: category_translation

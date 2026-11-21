@@ -1,0 +1,38 @@
+# Mutation settings for the Olist models.
+# Keys and references are listed here; categories, numeric and date columns are detected
+# from the clean data (see mutations/catalog.py).
+
+tables:
+  dim_customers:
+    primary_key: customer_id
+  dim_products:
+    primary_key: product_id
+  dim_sellers:
+    primary_key: seller_id
+  fct_orders:
+    primary_key: order_id
+  fct_order_items:
+    primary_key: order_item_key
+
+foreign_keys:
+  - child: fct_orders.customer_id
+    parent: dim_customers.customer_id
+  - child: fct_order_items.order_id
+    parent: fct_orders.order_id
+  - child: fct_order_items.product_id
+    parent: dim_products.product_id
+  - child: fct_order_items.seller_id
+    parent: dim_sellers.seller_id
+
+# Columns never mutated (none).
+exclude_columns: []
+
+# Brazil has 27 state codes, so the limit is a little higher than for football; that makes
+# the state columns categories alongside order_status and payment_type.
+category_max_distinct: 30
+category_max_ratio: 0.5
+
+# Two seeds instead of three keep the number of mutated databases (and the scoring time)
+# manageable for five tables.
+rows_per_mutation: [1, 5]
+seeds: [1, 2]
