@@ -31,7 +31,7 @@ Details in [RESULTS.md](RESULTS.md); charts in the dashboard (see How to run).
 
 ## How to run
 
-Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/); Docker Desktop only for Airflow.
+Requirements: Python 3.12 and uv ; Docker Desktop only for Airflow.
 
 ```bash
 uv sync
@@ -80,8 +80,6 @@ uv run pytest
 uv run python -m scoring.verify_fast --dataset olist --test-set manual_baseline.yml llm_gemini.yml
 ```
 
-A GitHub Action (`.github/workflows/checks.yml`) runs the unit tests and a dbt parse of the project on every push, without API keys or data. `--provider groq` uses gpt-oss-120b instead of Gemini. Outputs go to `reports/` (not committed), generated and pruned test sets to `dbt_project/test_sets/` (`olist/` for Olist), and mutated databases to `data/mutants/`.
-
 ## Trade-offs
 
 - **DuckDB on a laptop instead of S3 and Snowflake.** Free and quick to rerun, but the paper's DuckDB-to-Snowflake migration and cross-store check are not reproduced.
@@ -102,6 +100,6 @@ A GitHub Action (`.github/workflows/checks.yml`) runs the unit tests and a dbt p
 
 ## Credit and licence
 
-Reproduces and builds on Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026 ([code](https://github.com/igargouri10/football-analytics-platform), MIT licence). The football dbt models, the manual and expanded test sets, the authors' LLM test set and the 16 anomaly injections are adapted from that repository; files that reuse their code say so in a header comment, and [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) holds the licence text and the list of adapted files.
+Reproduces and builds on Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026 (MIT licence). The football dbt models, the manual and expanded test sets, the authors' LLM test set and the 16 anomaly injections are adapted from that repository; files that reuse their code say so in a header comment, and [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) holds the licence text and the list of adapted files.
 
 Related: T. Rehberger, T. Hütter, L. Ehrlinger and W. Wöß, *Evaluating Data Quality Tools: Measurement Capabilities and LLM Integration*, arXiv:2604.09163, 2026.
