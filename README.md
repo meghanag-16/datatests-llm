@@ -4,18 +4,6 @@ Data-quality testing for dbt pipelines with LLM-generated tests, evaluated by an
 
 The project starts from an exact reproduction of a published multi-layer data-quality framework and extends it toward automatically keeping only the generated tests that catch real problems.
 
-## Background and credit
-
-This work reproduces and builds on:
-
-> Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026.
->
-> Code: [igargouri10/football-analytics-platform](https://github.com/igargouri10/football-analytics-platform) (MIT licence)
-
-The dbt models, the manual and expanded test sets, the authors' LLM-generated test set and the 16 anomaly injections are adapted from the authors' repository. Files that reuse their code say so in a header comment.
-
-Related work: T. Rehberger, T. Hütter, L. Ehrlinger and W. Wöß, *Evaluating Data Quality Tools: Measurement Capabilities and LLM Integration*, arXiv:2604.09163, 2026. It finds that LLM integration in current data-quality tools is limited to rule creation, with no direct data validation by LLMs.
-
 ## What is done
 
 Full results and findings: [RESULTS.md](RESULTS.md). Charts: the results dashboard (`uv run streamlit run dashboard/app.py`).
@@ -86,8 +74,7 @@ reports/               experiment outputs (not committed)
 ```
 
 ## How to run
-Requirements: Python 3.12 and uv.
-=======
+
 Requirements: Python 3.12 and uv ; Docker Desktop only for Airflow.
 
 ```bash
@@ -143,13 +130,6 @@ uv run pytest
 
 Experiment results go to `reports/anomaly_results/`, generation reports to `reports/generation/<name>/`, and generated test sets to `dbt_project/test_sets/`. The test set name follows the provider that answered, for example `llm_gemini`. Mutated databases and their manifest go to `data/mutants/`. Scoring results go to `reports/scoring/<name>/` and the minimal test set to `dbt_project/test_sets/pruned_<name>.yml`. For Olist the same files go to an `olist/` subfolder of each of these locations.
 
-Optional LLM provider check: `uv run python scripts/check_llm.py`
-=======
-
-## Licence
-
-The code adapted from the authors' repository remains under its MIT licence. See [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) for the licence text and the list of adapted files.
-=======
 ## Limitations
 
 - Seven synthetic mutation operators stand in for real incidents; real data problems can look different.
