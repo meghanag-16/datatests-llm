@@ -1,63 +1,126 @@
 # datatests-llm
 
-LLM-generated dbt data tests, checked by damaging the data on purpose and keeping only the tests that catch something.
+Data-quality testing for dbt pipelines with LLM-generated tests, evaluated by anomaly injection.
 
-## What the project does
+The project starts from an exact reproduction of a published multi-layer data-quality framework and extends it toward automatically keeping only the generated tests that catch real problems.
 
-1. **Reproduces a published data-quality framework.** Gargouri & Reza (arXiv:2605.20500) test a football dbt pipeline with manual tests and GPT-4.1-mini-generated tests against 16 injected anomalies. The same models, tests and anomalies run here on DuckDB.
-2. **Generates dbt tests with free LLMs.** For each model, the column names, types, row count and sample rows go to Gemini 2.5 Flash or gpt-oss-120b (on Groq). Every proposed test is validated (columns, test types, arguments, SQL) before it is kept.
-3. **Damages copies of the data in known ways.** Seven mutation operators (nulls, duplicate keys, invalid categories, out-of-range numbers, orphaned rows, shifted dates, double-loaded rows) create a few hundred mutated databases per dataset.
-4. **Scores and prunes the tests.** Every test runs on every mutated database. Tests are classed as useful, redundant, low-value or broken, and a greedy set cover keeps the smallest set that still catches every detectable mutant.
-5. **Checks whether the pruned set holds up on new kinds of damage.** The minimal set is chosen on some mutation types and measured on types it never saw (a fixed split and a leave-one-type-out rotation). The paper judges its tests on the same anomalies it uses to choose them, so it cannot measure this.
-6. **Runs on two domains and in Airflow.** Football (the paper's data) and Olist e-commerce (five dbt models from a 5,000-order sample of 99,441 orders), orchestrated by Airflow DAGs in Docker. Every step also runs by hand.
+## Background and credit
 
-## Main results
+This work reproduces and builds on:
 
-Details in [RESULTS.md](RESULTS.md); charts in the dashboard (see How to run).
+> Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026.
+>
+> Code: [igargouri10/football-analytics-platform](https://github.com/igargouri10/football-analytics-platform) (MIT licence)
 
-| | Football | Olist |
-|---|---|---|
-| Paper's 16 anomalies caught: manual only, manual + LLM tests | 7/16 and 16/16 (paper: 7 and 16) | - |
-| Mutated databases | 188 | 427 |
-| Minimal set (Gemini / gpt-oss-120b) | 18 of 58 / 19 of 54 | 57 of 73 / 56 of 72 |
-| Minimal set on unseen damage types, share of the full set's catches | 33-40% | 2.7-2.9% |
-| Same, each type held out in turn (average) | 44-46% | 43-45% |
+The dbt models, the manual and expanded test sets, the authors' LLM-generated test set and the 16 anomaly injections are adapted from the authors' repository. Files that reuse their code say so in a header comment.
 
-- The paper's main result reproduces exactly, and tests from two free LLMs also reach 16/16, stable over five repeated and five regenerated trials.
-- On football about two thirds of the tests can be dropped with no loss of detection; on the richer Olist data most tests are needed.
-- A minimal test set does not transfer: chosen on some kinds of damage, it misses most of the damage it was not chosen on. Pruning keeps only what it is measured on.
-- Generated tests change from run to run: a fresh generation shares only 78-94% of its tests with the first one, and 15-17 generated tests fail on the real, clean Olist data.
-- The fast scoring engine gives exactly the same results as dbt (0 differences in 48,626 test results) and scores 427 databases in under a minute.
+Related work: T. Rehberger, T. Hütter, L. Ehrlinger and W. Wöß, *Evaluating Data Quality Tools: Measurement Capabilities and LLM Integration*, arXiv:2604.09163, 2026. It finds that LLM integration in current data-quality tools is limited to rule creation, with no direct data validation by LLMs.
+
+## What is done
+
+Full results and findings: [RESULTS.md](RESULTS.md). Charts: the results dashboard (`uv run streamlit run dashboard/app.py`).
+
+**Reproduction of the paper's main result** on English Premier League 2023-24 data (100 matches, 20 teams):
+
+| Test set | Batch A (key integrity) | Batch B (semantic/domain) | Batch C (mixed) | Total | Paper |
+|---|---|---|---|---|---|
+| Manual-only baseline | 4/4 | 0/6 | 3/6 | 7/16 | 7/16 |
+| Manual-expanded | 4/4 | 6/6 | 6/6 | 16/16 | 16/16 |
+| Manual + authors' LLM tests | 4/4 | 6/6 | 6/6 | 16/16 | 16/16 |
+
+Differences from the original setup:
+- Data is stored locally in DuckDB instead of S3 and Snowflake, so the DuckDB-to-Snowflake migration and cross-store check are not part of the reproduction.
+- Like the paper's workflow, the reproduction runs as an Airflow DAG (`reproduction_football`), here in a local Airflow in Docker; every step can also be run by hand.
+- TheSportsDB's original test key is no longer available. The same 100 matches (rounds 1 to 10) are fetched round by round with the current free key.
+- The API now reports finished matches as `FT`. This is mapped to the original value `Match Finished`.
+
+**Key results** (LLMs: Gemini 2.5 Flash and gpt-oss-120b on Groq; the paper used GPT-4.1-mini):
+- Manual tests plus tests generated by these LLMs also catch 16/16 anomalies, stable over five repeated and five freshly regenerated trials, as in the paper.
+- Scored against 188 mutated databases, a minimal set of 18 of 58 tests (Gemini) and 19 of 54 (gpt-oss-120b) keeps full detection, so about two thirds of the tests can be dropped.
+- A minimal set chosen on some mutation types does not transfer to unseen ones: it catches 33-40% of what the full set catches on a fixed held-out split, and 44-46% on average over leave-one-operator-out.
+- Generated tests are not reproducible: each fresh generation shares only 78-94% of its tests with the first.
+- On a second, real-world domain (Olist e-commerce, 427 mutated databases) pruning keeps 56-57 of 72-73 tests, and a minimal set catches only about 3% of what the full set catches on unseen mutation types.
+- The fast scoring engine gives exactly the same results as dbt (0 differences in 48,626 test results) and scores the 427 Olist databases in under a minute.
+
+**LLM test generation.** For each model, the column names, types, row count and a fixed sample of rows are sent to an LLM (Gemini by default, with automatic fallback to Groq or OpenRouter and a hard timeout per request). The reply is parsed as dbt YAML and every test is checked: unknown columns, unknown test types, missing arguments and SQL expressions that do not compile are rejected with a reason. The kept tests are then run once in dbt on a copy of the clean data; tests that error are dropped and tests that fail on clean data are flagged. Each test gets a stable id, and replies are cached on disk so reruns make no API calls.
+
+**Mutation engine.** Seven operators damage copies of the clean data in known ways: null injection, duplicate keys, invalid category values, out-of-range numbers, orphaned child rows (deleted parents), date shifts and double-counted rows. Column roles (key, foreign key, category, numeric, date) come from a small config plus the data itself. With the football config this produces about 190 mutated databases, each checked to differ from the clean data and recorded in a manifest with its operator, column, rows changed and seed.
+
+**Scoring and pruning.** Every candidate test (manual baseline plus generated tests) runs against the clean data and every mutated database, giving a test-by-mutant detection matrix. Tests are classified as broken (fail on clean data), low-value (catch nothing), redundant (catch only what another test already catches) or useful, and a greedy set cover picks a minimal test set that still catches every detectable mutant. The minimal set is written out as a dbt test set.
+
+**Fast scoring engine.** Starting dbt once per mutated database is slow (about 14 minutes for the 188 football databases on a laptop). By default the tests are compiled once with dbt and the compiled SQL runs directly in DuckDB, wrapped the way dbt wraps a data test. `scoring.verify_fast` compares it with dbt, and `--engine dbt` keeps the original path.
+
+**Held-out evaluation.** To avoid judging tests on the same damage used to select them (the evaluation bias noted in the paper), the minimal set is chosen using one group of mutation operators and measured on operators it never saw: a fixed split from `scoring/config.yml` plus a leave-one-operator-out rotation.
+
+**Second domain: Olist e-commerce.** The same pipeline runs on the public Olist Brazilian E-Commerce dataset (orders, items, payments, reviews, customers, products, sellers). dbt builds five models (`dim_customers`, `dim_products`, `dim_sellers`, `fct_orders`, `fct_order_items`) from a fixed, hash-based sample of 5,000 orders, the manual baseline tests only the primary keys (as the paper's football baseline does), and the mutation config yields about 450 mutated databases. Every command takes `--dataset olist`; the football files keep their original locations.
+
+**Orchestration with Airflow.** Airflow 3 runs in Docker (Postgres metadata database, LocalExecutor) with three DAGs. `reproduction_football` follows the paper's workflow: ingest, build models, sanity checks, clean snapshot, the 16-anomaly experiment with the authors' test sets, LLM test generation, the same experiment with the generated tests, and optionally the five-trial stability check. `extension_football` and `extension_olist` run ingest, build, checks and snapshot, then test generation and mutant creation in parallel, then scoring and pruning. The project's own Python environment is installed in the image from `uv.lock`, separate from Airflow's packages, and the project folder is mounted so a DAG run reads and writes the same files as the manual commands.
+
+**Results dashboard.** A black-and-white Streamlit dashboard shows the reproduction, how many tests are needed, how the minimal set does on unseen damage (per mutation type) and the stability of generated tests. It reads a small committed snapshot, `dashboard/results.json`, so it works without the (uncommitted) reports; `dashboard/export.py` refreshes it after new runs.
+
+**Continuous checks.** A GitHub Action runs the unit tests, a dbt parse of the project and the dashboard export on every push, without API keys or data.
+
+## Stack
+
+Python 3.12, uv, DuckDB, dbt (dbt-duckdb), Apache Airflow (Docker), Streamlit, GitHub Actions, Gemini / Groq / OpenRouter.
+
+## Project layout
+
+```
+dbt_project/
+  models/staging/      stg_matches
+  models/marts/        dim_teams, fct_matches, fct_training_dataset
+  models/olist/        Olist staging models and marts
+  test_sets/           manual_baseline, manual_expanded, authors_llm (olist/ for Olist)
+  tests/generic/       in_range and expression_is_true generic tests
+experiments/           anomaly injection and stability experiments
+llm_tests/             LLM providers (timeout, fallback), prompt, validation, cache, generator
+mutations/             mutation operators, planner and runner (config/ per dataset)
+scoring/               detection matrix, test classes, minimal set, held-out evaluation, fast engine
+common/                dataset registry and shared dbt runner
+dashboard/             Streamlit results dashboard and its data snapshot
+airflow/               Dockerfile, docker-compose.yml and DAGs
+.github/workflows/     continuous checks
+scripts/               download, load, checks, clean snapshot
+tests/                 unit tests (pytest)
+data/                  raw files and DuckDB databases (not committed)
+reports/               experiment outputs (not committed)
+```
 
 ## How to run
 
-Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/); Docker Desktop only for Airflow.
+Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync
-cp .env.example .env          # add API keys here; needed only for test generation
-```
+cp .env.example .env          # only needed for the LLM steps; add API keys there
 
-Football (the paper's data):
-
-```bash
+# 1. Data and models
 uv run python scripts/download_epl.py
 uv run python scripts/load_epl.py
 uv run dbt build --project-dir dbt_project --profiles-dir dbt_project --full-refresh
 uv run python scripts/check_football.py
 uv run python scripts/snapshot_clean.py
 
-uv run python experiments/run_anomaly_experiment.py                         # reproduction: 7/16 vs 16/16
-uv run python -m llm_tests.generate --provider gemini                       # LLM tests
+# 2. Anomaly experiment (reproduces 7/16 vs 16/16)
+uv run python experiments/run_anomaly_experiment.py
+
+# 3. Generate dbt tests with an LLM (needs an API key in .env)
+uv run python -m llm_tests.generate
 uv run python experiments/run_anomaly_experiment.py --test-set manual_plus_llm_gemini.yml
-uv run python -m mutations.run                                              # mutated databases
-uv run python -m scoring.run --test-set manual_baseline.yml llm_gemini.yml  # score, prune, held-out
-uv run python experiments/run_stability.py --provider gemini                # five-trial stability
-```
 
-Olist (download the zip from https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce into `data/raw/olist/` first):
+# 4. Create mutated copies of the clean data
+uv run python -m mutations.run
 
-```bash
+# 5. Score, prune and evaluate on held-out operators (fast engine; --engine dbt for the original)
+uv run python -m scoring.run --test-set manual_baseline.yml llm_gemini.yml
+uv run python -m scoring.verify_fast --test-set manual_baseline.yml llm_gemini.yml   # optional check against dbt
+
+# 6. Stability: five frozen runs and five fresh generations
+uv run python experiments/run_stability.py --provider gemini
+
+# 7. Second domain: Olist (download the zip from
+#    https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce into data/raw/olist/ first)
 uv run python scripts/load_olist.py
 uv run python scripts/build_dataset.py --dataset olist
 uv run python scripts/check_olist.py
@@ -65,43 +128,24 @@ uv run python scripts/snapshot_clean.py --dataset olist
 uv run python -m llm_tests.generate --dataset olist --provider gemini
 uv run python -m mutations.run --dataset olist
 uv run python -m scoring.run --dataset olist --test-set manual_baseline.yml llm_gemini.yml
-```
 
-Dashboard, Airflow and checks:
+# 8. Results dashboard (opens in the browser)
+uv run python dashboard/export.py             # refresh its data after new runs
+uv run streamlit run dashboard/app.py
 
-```bash
-uv run streamlit run dashboard/app.py          # results dashboard in the browser
-uv run python dashboard/export.py              # refresh the dashboard data after new runs
-
-docker compose -f airflow/docker-compose.yml up -d --build   # UI at http://localhost:8080 (airflow / airflow)
+# 9. Airflow (Docker Desktop): UI at http://localhost:8080, user/password airflow
+#    DAGs: reproduction_football, extension_football, extension_olist
+docker compose -f airflow/docker-compose.yml up -d --build
 docker compose -f airflow/docker-compose.yml down
 
+# Unit tests
 uv run pytest
-uv run python -m scoring.verify_fast --dataset olist --test-set manual_baseline.yml llm_gemini.yml
 ```
 
-A GitHub Action (`.github/workflows/checks.yml`) runs the unit tests and a dbt parse of the project on every push, without API keys or data. `--provider groq` uses gpt-oss-120b instead of Gemini. Outputs go to `reports/` (not committed), generated and pruned test sets to `dbt_project/test_sets/` (`olist/` for Olist), and mutated databases to `data/mutants/`.
+Experiment results go to `reports/anomaly_results/`, generation reports to `reports/generation/<name>/`, and generated test sets to `dbt_project/test_sets/`. The test set name follows the provider that answered, for example `llm_gemini`. Mutated databases and their manifest go to `data/mutants/`. Scoring results go to `reports/scoring/<name>/` and the minimal test set to `dbt_project/test_sets/pruned_<name>.yml`. For Olist the same files go to an `olist/` subfolder of each of these locations.
 
-## Trade-offs
+Optional LLM provider check: `uv run python scripts/check_llm.py`
 
-- **DuckDB on a laptop instead of S3 and Snowflake.** Free and quick to rerun, but the paper's DuckDB-to-Snowflake migration and cross-store check are not reproduced.
-- **Fast scoring engine.** dbt compiles the tests once and the SQL runs directly in DuckDB, so scoring takes seconds instead of starting dbt for every database. It relies on models being materialised as tables and does not support tests with a `where` config; `--engine dbt` and `scoring.verify_fast` remain for checking.
-- **Automatic scoring instead of a manual audit.** Usefulness is measured against hundreds of mutants, which scales and is repeatable, but it is only as good as the mutation operators.
-- **Free LLMs with short timeouts.** No cost and a fallback between providers, but rate limits and overloaded models (HTTP 429, 503, 504) can drop a request instead of retrying for long. Replies are cached and calls use temperature 0, so reruns are reproducible.
-- **Sampled Olist data.** 5,000 of 99,441 orders keep runs short; results may differ on the full dataset.
-- **Airflow in Docker.** Mirrors the paper's orchestration at the cost of a heavier setup; the same steps run without it.
+## Licence
 
-## Limitations
-
-- Seven synthetic mutation operators stand in for real incidents; real data problems can look different.
-- A minimal set is not safe to use on its own: it keeps only what the chosen mutation types reward.
-- Generated tests that fail on the clean Olist data have not been audited by hand; some may point to real data issues rather than wrong tests.
-- Two datasets and two LLMs; mutation scores come from one generation per LLM, while generations vary between runs.
-- Counts of useful and redundant tests are computed automatically, so they compare with the paper's manual audit in spirit, not one to one.
-- TheSportsDB's original key is gone: the same 100 matches are fetched round by round with the current free key, and status `FT` is mapped to `Match Finished`.
-
-## Credit and licence
-
-Reproduces and builds on Ismail Gargouri and Hassan Reza, *A Multi-Layer Testing Framework for Automated Data Quality Assurance in Cloud-Native ELT Pipelines*, arXiv:2605.20500, 2026 ([code](https://github.com/igargouri10/football-analytics-platform), MIT licence). The football dbt models, the manual and expanded test sets, the authors' LLM test set and the 16 anomaly injections are adapted from that repository; files that reuse their code say so in a header comment, and [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) holds the licence text and the list of adapted files.
-
-Related: T. Rehberger, T. Hütter, L. Ehrlinger and W. Wöß, *Evaluating Data Quality Tools: Measurement Capabilities and LLM Integration*, arXiv:2604.09163, 2026.
+The code adapted from the authors' repository remains under its MIT licence. See [THIRD_PARTY_LICENSE](THIRD_PARTY_LICENSE) for the licence text and the list of adapted files.
