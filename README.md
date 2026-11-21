@@ -56,9 +56,7 @@ Differences from the original setup:
 
 **Orchestration with Airflow.** Airflow 3 runs in Docker (Postgres metadata database, LocalExecutor) with three DAGs. `reproduction_football` follows the paper's workflow: ingest, build models, sanity checks, clean snapshot, the 16-anomaly experiment with the authors' test sets, LLM test generation, the same experiment with the generated tests, and optionally the five-trial stability check. `extension_football` and `extension_olist` run ingest, build, checks and snapshot, then test generation and mutant creation in parallel, then scoring and pruning. The project's own Python environment is installed in the image from `uv.lock`, separate from Airflow's packages, and the project folder is mounted so a DAG run reads and writes the same files as the manual commands.
 
-**Results dashboard.** A black-and-white Streamlit dashboard shows the reproduction, how many tests are needed, how the minimal set does on unseen damage (per mutation type) and the stability of generated tests. It reads a small committed snapshot, `dashboard/results.json`, so it works without the (uncommitted) reports; `dashboard/export.py` refreshes it after new runs.
-
-**Continuous checks.** A GitHub Action runs the unit tests, a dbt parse of the project and the dashboard export on every push, without API keys or data.
+**Results dashboard.** Streamlit dashboard shows the reproduction, how many tests are needed, how the minimal set does on unseen damage (per mutation type) and the stability of generated tests. It reads a small committed snapshot, `dashboard/results.json`, so it works without the (uncommitted) reports; `dashboard/export.py` refreshes it after new runs.
 
 ## Stack
 
@@ -90,7 +88,7 @@ reports/               experiment outputs (not committed)
 ## How to run
 
 <<<<<<< HEAD
-Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/).
+Requirements: Python 3.12 and uv.
 =======
 Requirements: Python 3.12 and uv ; Docker Desktop only for Airflow.
 >>>>>>> 1b766e4a3d1b64c0dc6feb6bdca4ea73b18ea3bf
